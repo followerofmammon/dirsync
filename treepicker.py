@@ -12,6 +12,11 @@ class TreePicker(object):
     _OPTION_RETURN = "Enter"
     _OPTION_EXPLORE = "Explore"
     _OPTION_QUIT = "Quit"
+    _OPTION_MOVE_TO_SEARCH_MODE = "Move to search mode"
+
+    _MODE_NAVIGATION = 'navigation'
+    _MODE_SEARCH = 'search'
+    _MODE_QUIT = 'quit'
 
     _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
 
@@ -21,6 +26,9 @@ class TreePicker(object):
         self._picked = dict()
         self._getcher = getcher.GetchUnix()
         self._sorted_children_by_nid_cache = dict()
+        self._mode = self._MODE_NAVIGATION
+        self._print_tree_once = True
+        self._search_filter = None
 
     def pick_one(self, max_nr_lines=10):
         choices = self.pick(max_nr_lines, including_root=False, min_nr_options=1, max_nr_options=1)
@@ -36,50 +44,68 @@ class TreePicker(object):
             assert children
             self._current_node = self._tree.get_node(self._tree.root)
             self._explore()
-        print_next_time = True
         while True:
-            if print_next_time:
-                self._print_tree(max_nr_lines)
-                if self._current_node.data is None:
-                    label = self._current_node.tag
-                else:
-                    label = self._current_node.data
-                print '\nCurrent:', label
-            print_next_time = True
-            option = self._scan_option()
-            if option == self._OPTION_NEXT:
-                result = self._next()
-                if not result:
-                    print_next_time = False
-            elif option == self._OPTION_PREV:
-                result = self._prev()
-                if not result:
-                    print_next_time = False
-            elif option == self._OPTION_TOGGLE:
-                if min_nr_options == max_nr_options == 1:
-                    pass
-                else:
-                    self._toggle()
-            elif option == self._OPTION_UP:
-                result = self._go_up(including_root=including_root)
-                if not result:
-                    print_next_time = False
-            elif option == self._OPTION_EXPLORE:
-                result = False
-                if max_nr_options > 1:
-                    result = self._explore()
-                if not result:
-                    print_next_time = False
-            elif option == self._OPTION_RETURN:
-                if min_nr_options == max_nr_options == 1:
-                    return [self._current_node.data]
-                if len(self._picked) <= max_nr_options and \
-                        len(self._picked) >= min_nr_options:
-                    return self._picked.values()
-            elif option == self._OPTION_QUIT:
-                return []
+            if self._mode == self._MODE_NAVIGATION:
+                result = self._navigate(max_nr_lines, min_nr_options, max_nr_options, including_root)
+                if result is not None:
+                    return result
+            elif self._mode == self._MODE_SEARCH:
+                self._search()
+            elif self._mode == self._MODE_QUIT:
+                break
             else:
-                assert False, option
+                raise ValueError(self._mode)
+
+    def _search(self):
+        print "Type a regex search filter:",
+        self._search_filter = raw_input()
+        self._mode = self._MODE_NAVIGATION
+
+    def _navigate(self, max_nr_lines, min_nr_options, max_nr_options, including_root):
+        if self._print_tree_once:
+            self._print_tree(max_nr_lines)
+            if self._current_node.data is None:
+                label = self._current_node.tag
+            else:
+                label = self._current_node.data
+            print '\nCurrent:', label
+        self._print_tree_once = True
+        option = self._scan_option()
+        if option == self._OPTION_NEXT:
+            result = self._next()
+            if not result:
+                self._print_tree_once = False
+        elif option == self._OPTION_PREV:
+            result = self._prev()
+            if not result:
+                self._print_tree_once = False
+        elif option == self._OPTION_TOGGLE:
+            if not (min_nr_options == max_nr_options == 1):
+                self._toggle()
+        elif option == self._OPTION_UP:
+            result = self._go_up(including_root=including_root)
+            if not result:
+                self._print_tree_once = False
+        elif option == self._OPTION_EXPLORE:
+            result = False
+            if max_nr_options > 1:
+                result = self._explore()
+            if not result:
+                self._print_tree_once = False
+        elif option == self._OPTION_RETURN:
+            if min_nr_options == max_nr_options == 1:
+                return [self._current_node.data]
+            if len(self._picked) <= max_nr_options and \
+                    len(self._picked) >= min_nr_options:
+                return self._picked.values()
+        elif option == self._OPTION_QUIT:
+            self._mode = self._MODE_QUIT
+        elif option == self._OPTION_MOVE_TO_SEARCH_MODE:
+            if self._mode == self._MODE_NAVIGATION:
+                self._mode = self._MODE_SEARCH
+        else:
+            assert False, option
+        return None
 
     @classmethod
     def _add_id_to_end_of_tags_in_all_nodes(cls, tree):
@@ -205,6 +231,7 @@ class TreePicker(object):
                          'l': self._OPTION_EXPLORE,
                          'h': self._OPTION_UP,
                          'q': self._OPTION_QUIT,
+                         '/': self._OPTION_MOVE_TO_SEARCH_MODE,
                          chr(13): self._OPTION_RETURN,
                          chr(32): self._OPTION_TOGGLE}
         key = None
