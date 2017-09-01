@@ -1,0 +1,153 @@
+import os
+import subprocess
+
+
+import dirtree
+import treewithops
+
+
+class DirEntry(object):
+    def __init__(self, name, path, filesystem_path=None):
+        self.name = name
+        self.path = path
+        self.filesystem_path = filesystem_path
+
+    def fullpath(self):
+        return os.path.join(self.path, self.name)
+
+    def __repr__(self):
+        return self.fullpath()
+
+
+class FileEntry(object):
+    def __init__(self, name, parent_dir_entry):
+        self.name = name
+        self.path = parent_dir_entry.fullpath()
+        self.filesystem_path = parent_dir_entry.filesystem_path
+
+    def __repr__(self):
+        return self.fullpath()
+
+    def fullpath(self):
+        return os.path.join(self.path, self.name)
+
+
+class DirTree(treewithops.TreeWithOps):
+    def __init__(self, rootpath=None):
+        super(treewithops.TreeWithOps, self).__init__()
+        self._rootpath = rootpath
+        self._root_entry = DirEntry(path=os.path.sep,
+                                    name=os.path.basename(rootpath),
+                                    filesystem_path=os.path.realpath(os.path.dirname(rootpath)))
+        self._root_node = self.create_node(identifier=self._root_entry.path,
+                                           tag=self._root_entry.name,
+                                           data=self._root_entry)
+
+    @staticmethod
+    def factory_from_filesystem(filesystem_path):
+        filesystem_path = os.path.realpath(filesystem_path)
+        _dirtree = DirTree(filesystem_path)
+        _dirtree.update_from_filesystem()
+        _dirtree.children(_dirtree._root_node.identifier).sort()
+        return _dirtree
+
+    @staticmethod
+    def factory_from_list_of_file_entries(files, filesystem_path):
+        filesystem_path = os.path.realpath(filesystem_path)
+        filesystem_basename = os.path.basename(filesystem_path)
+        _dirtree = DirTree(filesystem_path)
+        for file_entry in files:
+            file_first_component, inner_path = file_entry.fullpath().split(os.path.sep, 2)[1:]
+            if file_first_component != filesystem_basename:
+                raise ValueError("File's first path component must match that of filesystem path",
+                                 file_entry, filesystem_path, file_first_component, filesystem_basename)
+            parent_dir_node = _dirtree._get_parent_dir_node(inner_path)
+            _dirtree.create_node(identifier=file_entry.fullpath(),
+                                 tag=file_entry.name,
+                                 data=file_entry,
+                                 parent=parent_dir_node.identifier)
+        return _dirtree
+
+    def update_from_filesystem(self):
+        print "Scanning directory %s..." % (self._rootpath,)
+        command = ["find", self._rootpath, "-regex", ".*.mp3\|.*.mp4\|.*.wav\|.*.wmv", "-type", "f"]
+        output = subprocess.check_output(command)
+        lines = output.splitlines()
+        entries = lines[1:]
+        entries_without_rootpath = [entry[len(self._rootpath) + len(os.path.sep):]
+                                    for entry in entries]
+        for entry in entries_without_rootpath:
+            self._add_file_by_path(entry)
+
+    def get_unknown_entries_in_given_dirtree(self, other):
+        unknown_files_dirtree = DirTree(other._rootpath)
+        my_prefix = os.path.basename(self.fullpath())
+
+        def replace_prefix(filename):
+            parts = filename.split(os.path.sep)
+            parts = [parts[0]] + [my_prefix] + parts[2:]
+            return os.path.sep.join(parts)
+
+        unknown_files = [node.data for node in other.nodes.values() if
+                         replace_prefix(node.identifier) not in self.nodes and
+                         isinstance(node.data, dirtree.FileEntry)]
+
+        other_prefix = os.path.basename(other.fullpath())
+        for _file in unknown_files:
+            relative_path = self._remove_prefix_from_path(other_prefix, _file.fullpath())
+            unknown_files_dirtree._add_file_by_path(relative_path)
+        return unknown_files_dirtree
+
+    @staticmethod
+    def _remove_prefix_from_path(name, _path):
+        prefix = os.path.sep + name + os.path.sep
+        assert _path.startswith(prefix)
+        relative_path = _path[len(prefix):]
+        return relative_path
+
+    def _get_parent_dir_node(self, entry):
+        parts = entry.split(os.path.sep)
+        cur_subdir = self._root_node
+        for subdir_name in parts[:-1]:
+            cur_subdir = self._set_default_subdir(parent=cur_subdir, name=subdir_name)
+        return cur_subdir
+
+    def copy_inner_entries_from_dirtree(self, direntry):
+        entries = [node.data for node in direntry.nodes]
+        file_entries = [entry for entry in entries if isinstance(entry, FileEntry)]
+        import pdb
+        pdb.set_trace()
+
+    def _add_file_by_path(self, filepath):
+        parent_dir_node = self._get_parent_dir_node(filepath)
+        filename = os.path.basename(filepath)
+        _file = FileEntry(filename, parent_dir_entry=parent_dir_node.data)
+        self.create_node(identifier=_file.fullpath(),
+                         tag=_file.name,
+                         data=_file,
+                         parent=parent_dir_node)
+
+    def _set_default_subdir(self, parent, name):
+        entry_path = parent.data.fullpath()
+        entry_fullpath = os.path.join(entry_path, name)
+        node = self.get_node(entry_fullpath)
+        if node is None:
+            subdir_entry = DirEntry(name,
+                                    path=entry_path,
+                                    filesystem_path=os.path.join(parent.data.filesystem_path, name))
+            node = self.create_node(identifier=entry_fullpath, tag=name, data=subdir_entry,
+                                          parent=parent.identifier)
+        return node
+
+    def fullpath(self):
+        return self._rootpath
+
+    def __str__(self):
+        return self.fullpath()
+
+    def __repr__(self):
+        return self.fullpath()
+
+if __name__ == '__main__':
+    a = DirTree.factory_from_filesystem('alpha')
+    print a
