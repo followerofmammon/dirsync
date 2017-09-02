@@ -23,6 +23,9 @@ class InteractiveDirSync(object):
                 print "Nothing to synchronize; Destination dir alread contains all files in source dir."
                 break
             self._selected = self._chooseFiles(missing)
+            if self._selected is None:
+                print "Sync ended by user's request."
+                break
             if not self._selected:
                 break
             print "%d files were chosen to copy so far." % (len(self._selected),)
@@ -46,6 +49,8 @@ class InteractiveDirSync(object):
         print 'To select a file, press Space. When finished, press Enter.'
         tree_picker = treepicker.TreePicker(missing)
         entries = tree_picker.pick(self.MAX_NR_LINES)
+        if entries is None:
+            return None
         files = [entry for entry in entries if isinstance(entry, dirtree.FileEntry)]
         selected = dict()
         for file_entry in files:
