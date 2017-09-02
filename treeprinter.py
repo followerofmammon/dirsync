@@ -30,10 +30,10 @@ def print_tree(tree, selected_node, search_pattern, picked_nodes, max_nr_lines):
         elif nid in picked_nodes:
             line = termcolor.colored(line, "red")
         print line
-    _print_info(selected_node, search_pattern)
+    _print_info(selected_node, search_pattern, picked_nodes)
 
 
-def _print_info(selected_node, search_pattern):
+def _print_info(selected_node, search_pattern, picked_nodes):
     if selected_node.data is None:
         label = selected_node.tag
     else:
@@ -41,6 +41,7 @@ def _print_info(selected_node, search_pattern):
     print '\nCurrent:', label,
     if search_pattern is not None:
         print ', Search filter: %s' % (search_pattern,),
+    print ", %d items selected" % (len(picked_nodes),)
     print
 
 

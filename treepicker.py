@@ -140,8 +140,14 @@ class TreePicker(object):
             parent = self._tree.get_node(self._selected_node.bpointer)
             siblings = self._sorted_children(parent)
             wanted_index = siblings.index(self._selected_node) + distance
-            if wanted_index < len(siblings):
+            if wanted_index >= 0 and wanted_index < len(siblings):
                 self._selected_node = siblings[wanted_index]
+                return True
+            elif wanted_index == -1:
+                self._selected_node = siblings[-1]
+                return True
+            elif wanted_index == len(siblings):
+                self._selected_node = siblings[0]
                 return True
         return False
 
