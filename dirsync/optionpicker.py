@@ -80,9 +80,13 @@ class OptionPickerByMenuTraverse(OptionPicker):
             tree.create_node(tag=option, data=option, identifier=str(index), parent=tree.root)
         picker = treepicker.TreePicker(tree, min_nr_options=1, max_nr_options=1)
         if nr_options_to_pick == 1:
+            print 'Please choose a directory to sync'
             options = [picker.pick_one(max_nr_lines=10)]
-        else:
-            options = picker.pick_one(max_nr_lines=10)
+        elif nr_options_to_pick == 2:
+            print 'Please choose 2 directories to sync'
+            options = picker.pick(min_nr_options=nr_options_to_pick,
+                                  max_nr_options=nr_options_to_pick,
+                                  max_nr_lines=10)
         return options
 
 

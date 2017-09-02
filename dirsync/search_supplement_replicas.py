@@ -50,8 +50,8 @@ def _search_replicas(nr_replicas, filter_out=None):
         candidates.extend(candidates_paths)
     candidates = [candidate for candidate in candidates if candidate not in filter_out]
     _validate_enough_replicas(candidates, nr_replicas)
-    picker = optionpicker.OptionPicker(candidates)
-    return picker.pick(nr_options_to_pick=nr_replicas)
+    picker = optionpicker.OptionPickerByMenuTraverse(candidates)
+    return picker.pick_several(nr_options_to_pick=nr_replicas)
 
 
 def _validate_enough_replicas(candidates, nr_replicas):
