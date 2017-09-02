@@ -50,32 +50,32 @@ def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
     if current_root_nid != tree.root:
         current_root_nid = selected_node.bpointer
 
-    # Pick the uppermost root that allows printing below the limit of #lines
-    while (current_root_nid != tree.root):
-        parent_nid = tree.get_node(current_root_nid).bpointer
-        if tree.subtree(parent_nid).size() <= max_nr_lines:
-            current_root_nid = parent_nid
-        else:
-            break
     tree = tree.subtree(current_root_nid)
-    # Pick the uppermost root that allows printing below the limit of #lines
 
-    # Limit the level of printing until reaching limit of #lines
-    current_depth = tree.depth()
-    while current_depth >= 1 and current_depth > tree.depth(selected_node):
-        nodes_in_current_depth = [node for node in tree.nodes if tree.level(node) <= current_depth]
+    # Increase the level of printing until reaching limit of #lines
+    max_depth = 1
+    while max_depth >= 1 and max_depth > tree.depth(selected_node):
+        nodes_in_current_depth = [node for node in tree.nodes if tree.level(node) <= max_depth]
         if len(nodes_in_current_depth) > max_nr_lines:
-            current_depth -= 1
+            max_depth -= 1
         else:
             break
 
-    # Generate the subtree according to the new depth
-    tree = treelib.Tree(tree, deep=True)
-    while tree.depth() > current_depth:
-        nodes_too_deep = [nid for nid in tree.nodes if tree.depth(nid) == current_depth + 1]
-        for nid in nodes_too_deep:
-            tree.remove_node(nid)
-
+    _tree = treelib.Tree()
+    nodes_by_depth = [list() for depth in xrange(max_depth + 1)]
+    for node in tree.nodes.values():
+        depth = tree.depth(node)
+        if depth <= max_depth:
+            nodes_by_depth[depth].append(node)
+    root = tree.get_node(current_root_nid)
+    _tree.create_node(identifier=root.identifier, tag=root.tag, data=root.data)
+    for depth in xrange(1, max_depth + 1):
+        for node in nodes_by_depth[depth]:
+            _tree.create_node(identifier=node.identifier,
+                              tag=node.tag,
+                              data=node.data,
+                              parent=node.bpointer)
+    tree = _tree
     return tree
 
 
