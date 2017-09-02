@@ -82,11 +82,6 @@ class DirTree(treelib.Tree):
         non_existent_entries = [filepath for filepath in relative_filepaths if
                                 os.path.sep + os.path.join(self._root.name, filepath) not in self.nodes]
         for filepath in non_existent_entries:
-            try:
-                filepath.encode('utf-8')
-            except:
-                print 'Warning: Cannot parse file %s; its name cannot be encoded to utf-8' % (filepath,)
-                continue
             self._add_file_by_path(filepath)
 
     def iter_files(self):

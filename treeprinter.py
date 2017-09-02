@@ -1,4 +1,5 @@
 import treelib
+import binascii
 import termcolor
 
 
@@ -10,14 +11,12 @@ def print_tree(tree, selected_node, search_pattern, picked_nodes, max_nr_lines):
         selected_node = tree.get_node(tree.root)
     original_tree = tree
     tree = _prepare_tree_for_printing(tree, selected_node, max_nr_lines)
-    root_nid = tree.root
     _add_id_to_end_of_tags_in_all_nodes(tree)
-    lines = str(tree.subtree(root_nid)).splitlines()
-    line_index_to_nid = [_decode_encoded_tree_line(line)[1] for line in lines]
-    _remove_id_to_end_of_tags_in_all_nodes(tree)
-    lines = str(tree.subtree(root_nid)).splitlines()
+    lines = str(tree).splitlines()
     for line_index, line in enumerate(lines):
-        nid = line_index_to_nid[line_index]
+        tag, nid = _decode_encoded_tree_line(line)
+        encoded_tag_index = line.index(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)
+        line = line[:encoded_tag_index] + tag
         if not tree.children(nid) and original_tree.children(nid):
             line += " (...)"
         prefix = ""
@@ -43,6 +42,7 @@ def _print_info(selected_node, search_pattern):
     if search_pattern is not None:
         print ', Search filter: %s' % (search_pattern,),
     print
+
 
 def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
     # Find root node from which to print tree
@@ -81,19 +81,15 @@ def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
 
 def _add_id_to_end_of_tags_in_all_nodes(tree):
     for node in tree.nodes.values():
-        node.tag = (_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + node.tag +
-                    _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + node.identifier)
+        node.tag = (_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + binascii.hexlify(node.tag) +
+                    _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + binascii.hexlify(node.identifier))
 
 
 def _decode_encoded_tree_line(tag):
     parts = tag.split(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)
-    return parts[1:]
-
-
-def _remove_id_to_end_of_tags_in_all_nodes(tree):
-    for node in tree.nodes.values():
-        original_tag, _ = _decode_encoded_tree_line(node.tag)
-        node.tag = original_tag
+    encoded_tag = binascii.unhexlify(parts[1])
+    encoded_nid = binascii.unhexlify(parts[2])
+    return encoded_tag, encoded_nid
 
 
 if __name__ == '__main__':
