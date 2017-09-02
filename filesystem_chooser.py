@@ -14,6 +14,11 @@ class FilesystemPicker(object):
 
 
 if __name__ == "__main__":
-    picker = FilesystemPicker('alpha')
+    import sys
+    if len(sys.argv) > 1:
+        _path = sys.argv[1]
+    else:
+        _path = 'alpha'
+    picker = FilesystemPicker(_path)
     print picker.pick()
 

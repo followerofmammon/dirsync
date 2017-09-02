@@ -1,12 +1,12 @@
 import replicas_from_args
-import interactive_diff_sync
+import interactive_dir_sync
 import search_supplement_replicas
 
 ################# searchreplicas
 
 def sync_from_src_to_dst(src, dst):
-    diffsync = interactive_diff_sync.InteractiveDiffSync(src, dst)
-    diffsync.sync()
+    dirsync = interactive_dir_sync.InteractiveDirSync(src, dst)
+    dirsync.sync()
 
 def sync(replica_a, replica_b):
     sync_from_src_to_dst(src=replica_a, dst=replica_b)

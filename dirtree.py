@@ -1,9 +1,7 @@
 import os
+import shutil
+import treelib
 import subprocess
-
-
-import dirtree
-import treewithops
 
 
 class DirEntry(object):
@@ -31,17 +29,20 @@ class FileEntry(object):
     def fullpath(self):
         return os.path.join(self.path, self.name)
 
+    def full_filesystem_path(self):
+        return os.path.join(self.filesystem_path, self.name)
 
-class DirTree(treewithops.TreeWithOps):
+
+class DirTree(treelib.Tree):
     def __init__(self, rootpath=None):
-        super(treewithops.TreeWithOps, self).__init__()
-        self._rootpath = rootpath
-        self._root_entry = DirEntry(path=os.path.sep,
-                                    name=os.path.basename(rootpath),
-                                    filesystem_path=os.path.realpath(os.path.dirname(rootpath)))
-        self._root_node = self.create_node(identifier=self._root_entry.path,
-                                           tag=self._root_entry.name,
-                                           data=self._root_entry)
+        super(DirTree, self).__init__()
+        self._rootpath = os.path.realpath(rootpath)
+        self._root = DirEntry(path=os.path.sep,
+                              name=os.path.basename(rootpath),
+                              filesystem_path=os.path.dirname(self._rootpath))
+        self._root_node = self.create_node(identifier=self._root.path,
+                                           tag=self._root.name,
+                                           data=self._root)
 
     @staticmethod
     def factory_from_filesystem(filesystem_path):
@@ -74,10 +75,16 @@ class DirTree(treewithops.TreeWithOps):
         output = subprocess.check_output(command)
         lines = output.splitlines()
         entries = lines[1:]
-        entries_without_rootpath = [entry[len(self._rootpath) + len(os.path.sep):]
-                                    for entry in entries]
-        for entry in entries_without_rootpath:
-            self._add_file_by_path(entry)
+        relative_filepaths = [entry[len(self._rootpath) + len(os.path.sep):] for entry in entries]
+        non_existent_entries = [filepath for filepath in relative_filepaths if
+                                os.path.sep + os.path.join(self._root.name, filepath) not in self.nodes]
+        for filepath in non_existent_entries:
+            self._add_file_by_path(filepath)
+
+    def iter_files(self):
+        for node in self.nodes.itervalues():
+            if isinstance(node.data, FileEntry):
+                yield node.data
 
     def get_unknown_entries_in_given_dirtree(self, other):
         unknown_files_dirtree = DirTree(other._rootpath)
@@ -88,9 +95,8 @@ class DirTree(treewithops.TreeWithOps):
             parts = [parts[0]] + [my_prefix] + parts[2:]
             return os.path.sep.join(parts)
 
-        unknown_files = [node.data for node in other.nodes.values() if
-                         replace_prefix(node.identifier) not in self.nodes and
-                         isinstance(node.data, dirtree.FileEntry)]
+        unknown_files = [file_entry for file_entry in other.iter_files() if
+                         replace_prefix(file_entry.fullpath()) not in self.nodes]
 
         other_prefix = os.path.basename(other.fullpath())
         for _file in unknown_files:
@@ -112,20 +118,29 @@ class DirTree(treewithops.TreeWithOps):
             cur_subdir = self._set_default_subdir(parent=cur_subdir, name=subdir_name)
         return cur_subdir
 
-    def copy_inner_entries_from_dirtree(self, direntry):
-        entries = [node.data for node in direntry.nodes]
-        file_entries = [entry for entry in entries if isinstance(entry, FileEntry)]
-        import pdb
-        pdb.set_trace()
+    def copy_inner_entries_from_dirtree(self, dirtree):
+        for file_entry in dirtree.iter_files():
+            inner_path = dirtree.get_inner_path_of_entry(file_entry)
+            new_file_entry = self._add_file_by_path(inner_path)
+            try:
+                shutil.copy(file_entry.full_filesystem_path(),
+                            new_file_entry.full_filesystem_path())
+            except:
+                self.remove_node(new_file_entry.fullpath())
+                raise
+
+    def get_inner_path_of_entry(self, entry):
+        return entry.fullpath()[len(os.path.sep + self._root.name + os.path.sep):]
 
     def _add_file_by_path(self, filepath):
         parent_dir_node = self._get_parent_dir_node(filepath)
         filename = os.path.basename(filepath)
         _file = FileEntry(filename, parent_dir_entry=parent_dir_node.data)
-        self.create_node(identifier=_file.fullpath(),
-                         tag=_file.name,
-                         data=_file,
-                         parent=parent_dir_node)
+        file_entry = self.create_node(identifier=_file.fullpath(),
+                                      tag=_file.name,
+                                      data=_file,
+                                      parent=parent_dir_node)
+        return file_entry.data
 
     def _set_default_subdir(self, parent, name):
         entry_path = parent.data.fullpath()

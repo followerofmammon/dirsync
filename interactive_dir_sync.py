@@ -3,7 +3,7 @@ import treepicker
 import optionpicker
 
 
-class InteractiveDiffSync(object):
+class InteractiveDirSync(object):
     MAX_NR_LINES = 20
 
     _OPTION_COPY = "Copy selected files"
@@ -61,5 +61,5 @@ class InteractiveDiffSync(object):
 
 
 if __name__ == "__main__":
-    sync = InteractiveDiffSync('alpha', 'bravo')
+    sync = InteractiveDirSync('alpha', 'bravo')
     sync.sync()
