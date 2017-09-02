@@ -30,6 +30,8 @@ def _find_dirs_with_matching_name(parentdir):
 
 
 invocation_counter = 0
+
+
 def _search_replicas(nr_replicas, filter_out=None):
     global invocation_counter
     invocation_counter += 1
@@ -73,17 +75,17 @@ def _get_device_storing_dir(_dir):
 
 
 def _get_dir_size(_dir):
-	return subprocess.check_output(["du", "-h", "-s", _dir]).split()[0].strip()
+    return subprocess.check_output(["du", "-h", "-s", _dir]).split()[0].strip()
 
 
 def _get_device_info(device, devices_info):
     if devices_info.get('logicalname') == device:
-	return devices_info['description'], devices_info['product']
+        return devices_info['description'], devices_info['product']
     if 'children' in devices_info:
-	for child in devices_info['children']:
+        for child in devices_info['children']:
             childinfo = _get_device_info(device, child)
             if childinfo is not None:
-		return childinfo
+                return childinfo
     return None
 
 

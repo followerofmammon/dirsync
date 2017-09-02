@@ -21,4 +21,3 @@ if __name__ == "__main__":
         _path = 'alpha'
     picker = FilesystemPicker(_path)
     print picker.pick()
-

@@ -158,10 +158,10 @@ class DirTree(treelib.Tree):
         entry_fullpath = os.path.join(entry_path, name)
         node = self.get_node(entry_fullpath)
         if node is None:
-            filesystem_dirpath=os.path.join(parent.data.filesystem_dirpath, parent.data.name)
+            filesystem_dirpath = os.path.join(parent.data.filesystem_dirpath, parent.data.name)
             subdir_entry = DirEntry(name, path=entry_path, filesystem_dirpath=filesystem_dirpath)
             node = self.create_node(identifier=entry_fullpath, tag=name, data=subdir_entry,
-                                          parent=parent.identifier)
+                                    parent=parent.identifier)
         return node
 
     def fullpath(self):

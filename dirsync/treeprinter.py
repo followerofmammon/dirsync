@@ -20,9 +20,9 @@ def print_tree(tree, selected_node, search_pattern, picked_nodes, max_nr_lines):
         if not tree.children(nid) and original_tree.children(nid):
             line += " (...)"
         prefix = ""
-        prefix +=  ">" if nid == selected_node.identifier else " "
+        prefix += ">" if nid == selected_node.identifier else " "
         prefix += " "
-        prefix +=  "X" if nid in picked_nodes else " "
+        prefix += "X" if nid in picked_nodes else " "
         line = "%s %s" % (prefix, line)
         if nid == selected_node.identifier:
             color = "blue" if nid in picked_nodes else "green"
