@@ -125,7 +125,9 @@ class DirTree(treelib.Tree):
         return cur_subdir
 
     def copy_inner_entries_from_dirtree(self, dirtree):
-        for file_entry in dirtree.iter_files():
+        files = list(dirtree.iter_files())
+        for index, file_entry in enumerate(files):
+            print "Copying %s (%d out of %d)" % (file_entry, index + 1, len(files))
             inner_path = dirtree.get_inner_path_of_entry(file_entry)
             new_file_entry = self._add_file_by_path(inner_path)
             try:
