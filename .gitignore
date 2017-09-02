@@ -1,1 +1,6 @@
 *.pyc
+AUTHORS
+ChangeLog
+build/
+dirsync.egg-info/
+

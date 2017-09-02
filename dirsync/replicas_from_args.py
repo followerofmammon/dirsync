@@ -24,5 +24,5 @@ def get():
 
 def validate_replica(replica_path):
     if replica_path is not None and not os.path.isdir(replica_path):
-        print "{} is not a directoroy".format(replica_path)
+        print "{} is not a directory".format(replica_path)
         sys.exit(1)
