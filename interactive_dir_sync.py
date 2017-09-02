@@ -14,14 +14,15 @@ class InteractiveDirSync(object):
     def __init__(self, src, dst):
         self._src = dirtree.DirTree.factory_from_filesystem(src)
         self._dst = dirtree.DirTree.factory_from_filesystem(dst)
-        self._selected = list()
+        self._selected = dict()
 
     def sync(self):
         missing = self._dst.get_unknown_entries_in_given_dirtree(self._src)
-        print "Files in %s, which are not in %s:" % (self._src, self._dst)
-        self._tree_picker = treepicker.TreePicker(missing)
         while True:
-            self._chooseFiles()
+            if not missing.does_dir_contain_any_files():
+                print "Nothing to synchronize; Destination dir alread contains all files in source dir."
+                break
+            self._selected = self._chooseFiles(missing)
             if not self._selected:
                 break
             print "%d files were chosen to copy so far." % (len(self._selected),)
@@ -31,6 +32,8 @@ class InteractiveDirSync(object):
             elif option == self._OPTION_COPY:
                 self._copy()
                 self._update_from_filesystem()
+                missing = self._dst.get_unknown_entries_in_given_dirtree(self._src)
+                self._selected = dict()
             elif option == self._OPTION_REMOVE:
                 self._remove()
             elif option == self._OPTION_RESELECT:
@@ -38,11 +41,16 @@ class InteractiveDirSync(object):
             else:
                 assert False, option
 
-    def _chooseFiles(self):
+    def _chooseFiles(self, missing):
+        print "Files in %s, which are not in %s:" % (self._src, self._dst)
         print 'To select a file, press Space. When finished, press Enter.'
-        entries = self._tree_picker.pick(self.MAX_NR_LINES)
+        tree_picker = treepicker.TreePicker(missing)
+        entries = tree_picker.pick(self.MAX_NR_LINES)
         files = [entry for entry in entries if isinstance(entry, dirtree.FileEntry)]
-        self._selected = files
+        selected = dict()
+        for file_entry in files:
+            selected[file_entry.fullpath()] = file_entry
+        return selected
 
     def _chooseWhatToDoWithFiles(self):
         options = [self._OPTION_NOTHING, self._OPTION_RESELECT]
@@ -55,7 +63,7 @@ class InteractiveDirSync(object):
         self._dst.update_from_filesystem()
 
     def _copy(self):
-        _dirtree = dirtree.DirTree.factory_from_list_of_file_entries(self._selected,
+        _dirtree = dirtree.DirTree.factory_from_list_of_file_entries(self._selected.values(),
                                                                      self._src.fullpath())
         self._dst.copy_inner_entries_from_dirtree(_dirtree)
 

@@ -5,13 +5,16 @@ import subprocess
 
 
 class DirEntry(object):
-    def __init__(self, name, path, filesystem_path=None):
+    def __init__(self, name, path, filesystem_dirpath=None):
         self.name = name
-        self.path = path
-        self.filesystem_path = filesystem_path
+        self.dirpath = path
+        self.filesystem_dirpath = filesystem_dirpath
 
     def fullpath(self):
-        return os.path.join(self.path, self.name)
+        return os.path.join(self.dirpath, self.name)
+
+    def full_filesystem_path(self):
+        return os.path.join(self.filesystem_dirpath, self.name)
 
     def __repr__(self):
         return self.fullpath()
@@ -20,17 +23,17 @@ class DirEntry(object):
 class FileEntry(object):
     def __init__(self, name, parent_dir_entry):
         self.name = name
-        self.path = parent_dir_entry.fullpath()
-        self.filesystem_path = parent_dir_entry.filesystem_path
+        self.dirpath = parent_dir_entry.fullpath()
+        self.filesystem_dirpath = parent_dir_entry.full_filesystem_path()
 
     def __repr__(self):
         return self.fullpath()
 
     def fullpath(self):
-        return os.path.join(self.path, self.name)
+        return os.path.join(self.dirpath, self.name)
 
     def full_filesystem_path(self):
-        return os.path.join(self.filesystem_path, self.name)
+        return os.path.join(self.filesystem_dirpath, self.name)
 
 
 class DirTree(treelib.Tree):
@@ -39,29 +42,29 @@ class DirTree(treelib.Tree):
         self._rootpath = os.path.realpath(rootpath)
         self._root = DirEntry(path=os.path.sep,
                               name=os.path.basename(rootpath),
-                              filesystem_path=os.path.dirname(self._rootpath))
-        self._root_node = self.create_node(identifier=self._root.path,
+                              filesystem_dirpath=os.path.dirname(self._rootpath))
+        self._root_node = self.create_node(identifier=self._root.dirpath,
                                            tag=self._root.name,
                                            data=self._root)
 
     @staticmethod
-    def factory_from_filesystem(filesystem_path):
-        filesystem_path = os.path.realpath(filesystem_path)
-        _dirtree = DirTree(filesystem_path)
+    def factory_from_filesystem(filesystem_dirpath):
+        filesystem_dirpath = os.path.realpath(filesystem_dirpath)
+        _dirtree = DirTree(filesystem_dirpath)
         _dirtree.update_from_filesystem()
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
 
     @staticmethod
-    def factory_from_list_of_file_entries(files, filesystem_path):
-        filesystem_path = os.path.realpath(filesystem_path)
-        filesystem_basename = os.path.basename(filesystem_path)
-        _dirtree = DirTree(filesystem_path)
+    def factory_from_list_of_file_entries(files, filesystem_dirpath):
+        filesystem_dirpath = os.path.realpath(filesystem_dirpath)
+        filesystem_basename = os.path.basename(filesystem_dirpath)
+        _dirtree = DirTree(filesystem_dirpath)
         for file_entry in files:
             file_first_component, inner_path = file_entry.fullpath().split(os.path.sep, 2)[1:]
             if file_first_component != filesystem_basename:
                 raise ValueError("File's first path component must match that of filesystem path",
-                                 file_entry, filesystem_path, file_first_component, filesystem_basename)
+                                 file_entry, filesystem_dirpath, file_first_component, filesystem_basename)
             parent_dir_node = _dirtree._get_parent_dir_node(inner_path)
             _dirtree.create_node(identifier=file_entry.fullpath(),
                                  tag=file_entry.name,
@@ -104,6 +107,9 @@ class DirTree(treelib.Tree):
             unknown_files_dirtree._add_file_by_path(relative_path)
         return unknown_files_dirtree
 
+    def does_dir_contain_any_files(self):
+        return any(isinstance(entry, FileEntry) for entry in self.iter_files())
+
     @staticmethod
     def _remove_prefix_from_path(name, _path):
         prefix = os.path.sep + name + os.path.sep
@@ -123,8 +129,11 @@ class DirTree(treelib.Tree):
             inner_path = dirtree.get_inner_path_of_entry(file_entry)
             new_file_entry = self._add_file_by_path(inner_path)
             try:
-                shutil.copy(file_entry.full_filesystem_path(),
-                            new_file_entry.full_filesystem_path())
+                if os.path.exists(new_file_entry.filesystem_dirpath):
+                    assert os.path.isdir(new_file_entry.filesystem_dirpath)
+                else:
+                    os.makedirs(new_file_entry.filesystem_dirpath)
+                shutil.copy(file_entry.full_filesystem_path(), new_file_entry.full_filesystem_path())
             except:
                 self.remove_node(new_file_entry.fullpath())
                 raise
@@ -147,9 +156,8 @@ class DirTree(treelib.Tree):
         entry_fullpath = os.path.join(entry_path, name)
         node = self.get_node(entry_fullpath)
         if node is None:
-            subdir_entry = DirEntry(name,
-                                    path=entry_path,
-                                    filesystem_path=os.path.join(parent.data.filesystem_path, name))
+            filesystem_dirpath=os.path.join(parent.data.filesystem_dirpath, parent.data.name)
+            subdir_entry = DirEntry(name, path=entry_path, filesystem_dirpath=filesystem_dirpath)
             node = self.create_node(identifier=entry_fullpath, tag=name, data=subdir_entry,
                                           parent=parent.identifier)
         return node
