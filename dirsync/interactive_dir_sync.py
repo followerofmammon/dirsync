@@ -1,4 +1,5 @@
 import dirtree
+import printer
 import treepicker
 import optionpicker
 
@@ -20,15 +21,16 @@ class InteractiveDirSync(object):
         missing = self._dst.get_unknown_entries_in_given_dirtree(self._src)
         while True:
             if not missing.does_dir_contain_any_files():
-                print "Nothing to synchronize; Destination dir alread contains all files in source dir."
+                printer.print_string("Nothing to synchronize; Destination dir alread contains all files "
+                                     "in source dir.")
                 break
             self._selected = self._chooseFiles(missing)
             if self._selected is None:
-                print "Sync ended by user's request."
+                printer.print_string("Sync ended by user's request.")
                 break
             if not self._selected:
                 break
-            print "%d files were chosen to copy so far." % (len(self._selected),)
+            printer.print_string("%d files were chosen to copy so far." % (len(self._selected),))
             option = self._chooseWhatToDoWithFiles()
             if option == self._OPTION_NOTHING:
                 break
@@ -45,9 +47,10 @@ class InteractiveDirSync(object):
                 assert False, option
 
     def _chooseFiles(self, missing):
-        print "Files in %s, which are not in %s:" % (self._src, self._dst)
-        print 'To select a file, press Space. When finished, press Enter.'
-        tree_picker = treepicker.TreePicker(missing)
+        tree_header = ("Files in %s, which are not in %s:\n"
+                       "(To select a file, press Space. When finished, press Enter.)" %
+                       (self._src, self._dst))
+        tree_picker = treepicker.TreePicker(missing, tree_header=tree_header)
         entries = tree_picker.pick(self.MAX_NR_LINES)
         if entries is None:
             return None

@@ -1,4 +1,5 @@
 import sys
+import printer
 import treelib
 
 import treepicker
@@ -27,11 +28,11 @@ class OptionPickerByNumbers(OptionPicker):
         assert nr_options_to_pick <= len(self._options)
         if len(self._options) == nr_options_to_pick:
             if nr_options_to_pick == 2:
-                print "The following replicas were found:"
-                print "To use them, press enter."
+                printer.print_string("The following replicas were found:")
+                printer.print_string("To use them, press enter.")
             elif nr_options_to_pick == 1:
-                print "The following replica was found: \n\n\t%s\n" % (self._options[0],)
-                print "To use it, press enter."
+                printer.print_string("The following replica was found: \n\n\t%s\n" % (self._options[0],))
+                printer.print_string("To use it, press enter.")
             self._continue_only_on_enter()
             picked_options = self._options
         else:
@@ -44,22 +45,22 @@ class OptionPickerByNumbers(OptionPicker):
         possible_indices = [index for index in xrange(len(self._options)) if
                             index not in self._picked_indices]
         for index in possible_indices:
-            print "\t%d: %s" % (index, self._options[index])
+            printer.print_string("\t%d: %s" % (index, self._options[index]))
 
     def _pick_option(self):
-        print "Pick an option by typing its number"
+        printer.print_string("Pick an option by typing its number")
         self._print_options()
         max_index = len(self._options) - 1
         while True:
-            print ">>> ",
+            printer.print_string(">>> ")
             raw_index = raw_input()
             try:
                 index = int(raw_index)
             except ValueError:
-                print "Cannot parse index. please try again."
+                printer.print_string("Cannot parse index. please try again.")
                 continue
             if index > max_index or index < 0:
-                print "Please specify a number between 0 and %d" % (max_index,)
+                printer.print_string("Please specify a number between 0 and %d" % (max_index,))
                 continue
             break
         self._picked_indices.append(index)
@@ -80,10 +81,10 @@ class OptionPickerByMenuTraverse(OptionPicker):
             tree.create_node(tag=option, data=option, identifier=str(index), parent=tree.root)
         picker = treepicker.TreePicker(tree, min_nr_options=1, max_nr_options=1)
         if nr_options_to_pick == 1:
-            print 'Please choose a directory to sync'
+            printer.print_string('Please choose a directory to sync')
             options = [picker.pick_one(max_nr_lines=10)]
         elif nr_options_to_pick == 2:
-            print 'Please choose 2 directories to sync'
+            printer.print_string('Please choose 2 directories to sync')
             options = picker.pick(min_nr_options=nr_options_to_pick,
                                   max_nr_options=nr_options_to_pick,
                                   max_nr_lines=10)
@@ -92,4 +93,4 @@ class OptionPickerByMenuTraverse(OptionPicker):
 
 if __name__ == "__main__":
     picker = OptionPickerByMenuTraverse(['first', 'second', 'third'])
-    print picker.pick_one()
+    printer.print_string(picker.pick_one())

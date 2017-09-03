@@ -14,10 +14,16 @@ class FilesystemPicker(object):
 
 
 if __name__ == "__main__":
+    import os
     import sys
+
+    import printer
     if len(sys.argv) > 1:
         _path = sys.argv[1]
     else:
         _path = 'alpha'
     picker = FilesystemPicker(_path)
-    print picker.pick()
+    if os.getenv('MODE') == 'interactive':
+        printer.wrapper(picker.pick)
+    else:
+        picker.pick()

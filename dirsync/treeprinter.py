@@ -1,12 +1,25 @@
+import printer
+
 import treelib
 import binascii
-import termcolor
 
 
 _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
 
 
-def print_tree(tree, selected_node, search_pattern, picked_nodes, max_nr_lines):
+def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=None, tree_header=None):
+    # Not using a generator since computation is slow while iterating, during which the screen is clear
+    tree_lines = list(_get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines))
+    printer.clear_screen()
+    if tree_header is not None:
+        printer.print_string(tree_header)
+    for index, (line, color) in enumerate(tree_lines):
+        printer.print_string(line, color)
+    info_line = _get_info_lines(selected_node, search_pattern, picked_nodes)
+    printer.print_string(info_line)
+
+
+def _get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines):
     if selected_node.identifier not in tree.nodes:
         selected_node = tree.get_node(tree.root)
     original_tree = tree
@@ -26,23 +39,23 @@ def print_tree(tree, selected_node, search_pattern, picked_nodes, max_nr_lines):
         line = "%s %s" % (prefix, line)
         if nid == selected_node.identifier:
             color = "blue" if nid in picked_nodes else "green"
-            line = termcolor.colored(line, color)
         elif nid in picked_nodes:
-            line = termcolor.colored(line, "red")
-        print line
-    _print_info(selected_node, search_pattern, picked_nodes)
+            color = "red"
+        else:
+            color = None
+        yield line, color
 
 
-def _print_info(selected_node, search_pattern, picked_nodes):
+def _get_info_lines(selected_node, search_pattern, picked_nodes):
     if selected_node.data is None:
         label = selected_node.tag
     else:
         label = selected_node.data
-    print '\nCurrent:', label,
+    line = 'Current: %s' % (label,)
     if search_pattern is not None:
-        print ', Search filter: %s' % (search_pattern,),
-    print ", %d items selected" % (len(picked_nodes),)
-    print
+        line += ', Search filter: %s' % (search_pattern,)
+    line += ", %d items selected" % (len(picked_nodes),)
+    return line
 
 
 def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
@@ -54,9 +67,9 @@ def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
     tree = tree.subtree(current_root_nid)
 
     # Increase the level of printing until reaching limit of #lines
-    max_depth = 1
+    max_depth = tree.depth()
     while max_depth >= 1 and max_depth > tree.depth(selected_node):
-        nodes_in_current_depth = [node for node in tree.nodes if tree.level(node) <= max_depth]
+        nodes_in_current_depth = [node for node in tree.nodes if tree.depth(node) <= max_depth]
         if len(nodes_in_current_depth) > max_nr_lines:
             max_depth -= 1
         else:

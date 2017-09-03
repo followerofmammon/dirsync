@@ -1,6 +1,8 @@
 import os
 import sys
 
+import printer
+
 
 def get():
     replica_a = replica_b = None
@@ -11,7 +13,7 @@ def get():
         replica_a = sys.argv[1]
         replica_b = sys.argv[2]
     elif nr_args > 3:
-        print "Invalid number of arguments."
+        printer.print_string("Invalid number of arguments.")
         sys.exit(1)
     if replica_a is not None:
         validate_replica(replica_a)
@@ -24,5 +26,5 @@ def get():
 
 def validate_replica(replica_path):
     if replica_path is not None and not os.path.isdir(replica_path):
-        print "{} is not a directory".format(replica_path)
+        printer.print_string("{} is not a directory".format(replica_path))
         sys.exit(1)

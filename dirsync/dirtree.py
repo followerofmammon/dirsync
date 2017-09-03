@@ -3,6 +3,8 @@ import shutil
 import treelib
 import subprocess
 
+import printer
+
 
 class DirEntry(object):
     def __init__(self, name, path, filesystem_dirpath=None):
@@ -73,7 +75,7 @@ class DirTree(treelib.Tree):
         return _dirtree
 
     def update_from_filesystem(self):
-        print "Scanning directory %s..." % (self._rootpath,)
+        printer.print_string("Scanning directory %s..." % (self._rootpath,))
         command = ["find", self._rootpath, "-regex", ".*.mp3\|.*.mp4\|.*.wav\|.*.wmv", "-type", "f"]
         output = subprocess.check_output(command)
         lines = output.splitlines()
@@ -127,7 +129,7 @@ class DirTree(treelib.Tree):
     def copy_inner_entries_from_dirtree(self, dirtree):
         files = list(dirtree.iter_files())
         for index, file_entry in enumerate(files):
-            print "Copying %s (%d out of %d)" % (file_entry, index + 1, len(files))
+            printer.print_string("Copying %s (%d out of %d)" % (file_entry, index + 1, len(files)))
             inner_path = dirtree.get_inner_path_of_entry(file_entry)
             new_file_entry = self._add_file_by_path(inner_path)
             try:
@@ -175,4 +177,4 @@ class DirTree(treelib.Tree):
 
 if __name__ == '__main__':
     a = DirTree.factory_from_filesystem('alpha')
-    print a
+    printer.print_string(a)

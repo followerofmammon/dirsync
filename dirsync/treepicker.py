@@ -2,6 +2,7 @@ import re
 import treelib
 
 import getcher
+import printer
 import treeprinter
 
 
@@ -19,7 +20,7 @@ class TreePicker(object):
     _MODE_SEARCH = 'search'
     _MODE_QUIT = 'quit'
 
-    def __init__(self, tree, min_nr_options=0, max_nr_options=None):
+    def __init__(self, tree, min_nr_options=0, max_nr_options=None, tree_header=None):
         self._original_tree = tree
         self._tree = tree
         self._selected_node = self._tree.get_node(self._original_tree.root)
@@ -29,6 +30,7 @@ class TreePicker(object):
         self._print_tree_once = True
         self._search_pattern = None
         self._nodes_that_match_search_filter = dict()
+        self._tree_header = tree_header
 
     def pick_one(self, max_nr_lines=10):
         choices = self.pick(max_nr_lines, including_root=False, min_nr_options=1, max_nr_options=1)
@@ -57,7 +59,7 @@ class TreePicker(object):
                 raise ValueError(self._mode)
 
     def _search(self):
-        print "Type a regex search filter:",
+        printer.print_string("Type a regex search filter:")
         self._search_pattern = raw_input()
         self._tree = treelib.Tree(self._original_tree, deep=True)
         if self._search_pattern:
@@ -91,8 +93,8 @@ class TreePicker(object):
         if self._search_pattern is not None:
             self._filter_nodes_that_match()
         if self._print_tree_once:
-            treeprinter.print_tree(self._tree, self._selected_node, self._search_pattern, self._picked,
-                                   max_nr_lines)
+            treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                                   max_nr_lines, self._search_pattern, self._tree_header)
         self._print_tree_once = True
         option = self._scan_option()
         if option == self._OPTION_NEXT:
@@ -230,4 +232,9 @@ if __name__ == '__main__':
     b = thetree.create_node('childnode4', 'childnode4', parent='rootnodeid', data='child4data')
     b = thetree.create_node('childnode5', 'childnode5', parent='rootnodeid', data='child5data')
     treepicker = TreePicker(thetree)
-    picked = treepicker.pick(max_nr_lines=25)
+
+    import os
+    if os.getenv('MODE') == 'interactive':
+        printer.wrapper(treepicker.pick, max_nr_lines=25)
+    else:
+        print treepicker.pick(max_nr_lines=25)

@@ -1,3 +1,7 @@
+import os
+
+import printer
+import treeprinter
 import replicas_from_args
 import interactive_dir_sync
 import search_supplement_replicas
@@ -15,9 +19,12 @@ def sync(replica_a, replica_b):
 
 def main():
     replica_a_path, replica_b_path = replicas_from_args.get()
-    replica_a_path, replica_b_path = search_supplement_replicas.search(replica_a_path,
-                                                                       replica_b_path)
+    replica_a_path, replica_b_path = search_supplement_replicas.search(replica_a_path, replica_b_path)
     sync(replica_a_path, replica_b_path)
 
+
 if __name__ == "__main__":
-    main()
+    if os.getenv('MODE') == 'interactive':
+        printer.wrapper(main)
+    else:
+        main()
