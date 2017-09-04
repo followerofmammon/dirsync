@@ -1,7 +1,8 @@
-import printer
-
 import treelib
 import binascii
+
+import printer
+import treelib_printwrapper
 
 
 _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
@@ -19,13 +20,17 @@ def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=N
     printer.print_string(info_line)
 
 
+def _node_key(node):
+    return str(node.data)
+
+
 def _get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines):
     if selected_node.identifier not in tree.nodes:
         selected_node = tree.get_node(tree.root)
     original_tree = tree
     tree = _prepare_tree_for_printing(tree, selected_node, max_nr_lines)
     _add_id_to_end_of_tags_in_all_nodes(tree)
-    lines = str(tree).splitlines()
+    lines = treelib_printwrapper.get_tree_output(tree, key=_node_key).splitlines()
     for line_index, line in enumerate(lines):
         tag, nid = _decode_encoded_tree_line(line)
         encoded_tag_index = line.index(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)

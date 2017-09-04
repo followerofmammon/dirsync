@@ -201,16 +201,16 @@ if __name__ == '__main__':
     import treelib
     thetree = treelib.Tree()
     root_ = thetree.create_node(identifier='rootnodeid', tag='rootnodetag', data='rootnodeval')
-    for i in ['a', 'b', 'c', 'd']:
+    for i in range(5) + range(10, 15):
         name = "childnode%s" % (i,)
         thetree.create_node(name, name, parent='rootnodeid', data=name)
     for i in xrange(3, 9):
         name = "grandson%d" % (i,)
-        thetree.create_node(name, name, parent='childnodea', data=name)
+        thetree.create_node(name, name, parent='childnode4', data=name)
     for i in xrange(7):
         name = "grandgrandson%d" % (i,)
         thetree.create_node(name, name, parent='grandson7', data=name)
-    for i in [7,8,9]:
+    for i in [7, 8, 9]:
         name = "grandgrandson%d" % (i * 11,)
         thetree.create_node(name, name, parent='grandson8', data=name)
 
