@@ -16,6 +16,10 @@ class TreePicker(object):
     _OPTION_QUIT = "Quit"
     _OPTION_MOVE_TO_SEARCH_MODE = "Move to search mode"
     _OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE = "Move to interactive search mode"
+    _OPTION_MOVE_TO_FIRST_SIBLING = 'Move to first sibling'
+    _OPTION_MOVE_TO_LAST_SIBLING = 'Move to last sibling'
+    _OPTION_PAGE_UP = 'Page up'
+    _OPTION_PAGE_DOWN = 'Page down'
 
     _MODE_NAVIGATION = 'navigation'
     _MODE_SEARCH = 'search'
@@ -112,6 +116,16 @@ class TreePicker(object):
         elif option == self._OPTION_PREV:
             success = self._move_selection_relative(distance=-1)
             self._print_tree_once = success
+        elif option == self._OPTION_MOVE_TO_FIRST_SIBLING:
+            self._move_selection_absolute(0)
+        elif option == self._OPTION_MOVE_TO_LAST_SIBLING:
+            self._move_selection_absolute(-1)
+        elif option == self._OPTION_PAGE_UP:
+            success = self._move_selection_relative(distance=-4)
+            self._print_tree_once = success
+        elif option == self._OPTION_PAGE_DOWN:
+            success = self._move_selection_relative(distance=4)
+            self._print_tree_once = success
         elif option == self._OPTION_TOGGLE:
             if not (min_nr_options == max_nr_options == 1):
                 self._toggle()
@@ -170,21 +184,28 @@ class TreePicker(object):
             self._sorted_children_by_nid_cache[nid] = sorted(self._tree.children(nid))
         return self._sorted_children_by_nid_cache[nid]
 
+    def _get_siblings(self):
+        parent = self._tree.get_node(self._selected_node.bpointer)
+        return self._sorted_children(parent)
+
     def _move_selection_relative(self, distance):
         if self._selected_node.identifier != self._tree.root:
-            parent = self._tree.get_node(self._selected_node.bpointer)
-            siblings = self._sorted_children(parent)
+            siblings = self._get_siblings()
             wanted_index = siblings.index(self._selected_node) + distance
             if wanted_index >= 0 and wanted_index < len(siblings):
                 self._selected_node = siblings[wanted_index]
                 return True
-            elif wanted_index == -1:
-                self._selected_node = siblings[-1]
-                return True
-            elif wanted_index == len(siblings):
+            elif wanted_index < 0:
                 self._selected_node = siblings[0]
                 return True
+            elif wanted_index >= len(siblings):
+                self._selected_node = siblings[-1]
+                return True
         return False
+
+    def _move_selection_absolute(self, index):
+        siblings = self._get_siblings()
+        self._selected_node = siblings[index]
 
     def _explore(self):
         if self._tree.children(self._selected_node.identifier):
@@ -208,11 +229,18 @@ class TreePicker(object):
                          'l': self._OPTION_EXPLORE,
                          'h': self._OPTION_UP,
                          'q': self._OPTION_QUIT,
+                         'G': self._OPTION_MOVE_TO_LAST_SIBLING,
+                         'g': self._OPTION_MOVE_TO_FIRST_SIBLING,
                          chr(3): self._OPTION_QUIT,
-                         's': self._OPTION_MOVE_TO_SEARCH_MODE,
-                         '/': self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE,
+                         '/': self._OPTION_MOVE_TO_SEARCH_MODE,
+                         chr(16): self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE,
                          chr(13): self._OPTION_RETURN,
-                         chr(32): self._OPTION_TOGGLE}
+                         chr(32): self._OPTION_TOGGLE,
+                         chr(4): self._OPTION_PAGE_DOWN,
+                         chr(21): self._OPTION_PAGE_UP,
+                         'u': self._OPTION_PAGE_UP,
+                         'd': self._OPTION_PAGE_DOWN
+                         }
         key = None
         while key not in key_to_option:
             key = getcher.GetchUnix()()
