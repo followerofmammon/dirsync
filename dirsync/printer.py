@@ -73,7 +73,6 @@ class _CursesWindowPrinter(object):
         line = line.replace('\xe2\x94\x82', '|')
         line = line.replace('\xe2\x94\x9c', '+')
         line = line.replace('\xe2\x94\x94', '+')
-        line += str(self._window.getmaxyx())
         if len(line) >= max_width:
             line = line[:max_width]
         if color is None:
