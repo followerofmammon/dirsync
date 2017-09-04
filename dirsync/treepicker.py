@@ -201,36 +201,19 @@ if __name__ == '__main__':
     import treelib
     thetree = treelib.Tree()
     root_ = thetree.create_node(identifier='rootnodeid', tag='rootnodetag', data='rootnodeval')
-    a = thetree.create_node('childnode1', 'childnode1', parent='rootnodeid', data='child1data')
-    thetree.create_node('grandson3', 'grandson3', parent='childnode1', data='grandson3data')
-    thetree.create_node('grandson4', 'grandson4', parent='childnode1', data='grandson4data')
-    thetree.create_node('grandson5', 'grandson5', parent='childnode1', data='grandson5data')
-    thetree.create_node('grandson6', 'grandson6', parent='childnode1', data='grandson6data')
-    thetree.create_node('grandson7', 'grandson7', parent='childnode1', data='grandson7data')
-    thetree.create_node('grandson8', 'grandson8', parent='childnode1', data='grandson8data')
+    for i in ['a', 'b', 'c', 'd']:
+        name = "childnode%s" % (i,)
+        thetree.create_node(name, name, parent='rootnodeid', data=name)
+    for i in xrange(3, 9):
+        name = "grandson%d" % (i,)
+        thetree.create_node(name, name, parent='childnodea', data=name)
+    for i in xrange(7):
+        name = "grandgrandson%d" % (i,)
+        thetree.create_node(name, name, parent='grandson7', data=name)
+    for i in [7,8,9]:
+        name = "grandgrandson%d" % (i * 11,)
+        thetree.create_node(name, name, parent='grandson8', data=name)
 
-    thetree.create_node('grandgrandson1', 'grandgrandson1', parent='grandson7', data='grandgrand1data')
-    thetree.create_node('grandgrandson2', 'grandgrandson2', parent='grandson7', data='grandgrand2data')
-    thetree.create_node('grandgrandson3', 'grandgrandson3', parent='grandson7', data='grandgrand3data')
-    thetree.create_node('grandgrandson4', 'grandgrandson4', parent='grandson7', data='grandgrand4data')
-    thetree.create_node('grandgrandson5', 'grandgrandson5', parent='grandson7', data='grandgrand5data')
-    thetree.create_node('grandgrandson6', 'grandgrandson6', parent='grandson7', data='grandgrand6data')
-    thetree.create_node('grandgrandson7', 'grandgrandson7', parent='grandson7', data='grandgrand7data')
-    thetree.create_node('grandgrandson9', 'grandgrandson8', parent='grandson7', data='grandgrand9data')
-
-    thetree.create_node('grandgrandson11', 'grandgrandson11', parent='grandson8', data='grandgrand11')
-    thetree.create_node('grandgrandson22', 'grandgrandson22', parent='grandson8', data='grandgrand22')
-    thetree.create_node('grandgrandson33', 'grandgrandson33', parent='grandson8', data='grandgrand33')
-    thetree.create_node('grandgrandson44', 'grandgrandson44', parent='grandson8', data='grandgrand44')
-    thetree.create_node('grandgrandson55', 'grandgrandson55', parent='grandson8', data='grandgrand55')
-    thetree.create_node('grandgrandson66', 'grandgrandson66', parent='grandson8', data='grandgrand66')
-    thetree.create_node('grandgrandson77', 'grandgrandson77', parent='grandson8', data='grandgrand77')
-    thetree.create_node('grandgrandson99', 'grandgrandson88', parent='grandson8', data='grandgrand99')
-
-    b = thetree.create_node('childnode2', 'childnode2', parent='rootnodeid', data='child2data')
-    b = thetree.create_node('childnode3', 'childnode3', parent='rootnodeid', data='child3data')
-    b = thetree.create_node('childnode4', 'childnode4', parent='rootnodeid', data='child4data')
-    b = thetree.create_node('childnode5', 'childnode5', parent='rootnodeid', data='child5data')
     treepicker = TreePicker(thetree)
 
     import os
