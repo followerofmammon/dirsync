@@ -15,10 +15,15 @@ class TreePicker(object):
     _OPTION_EXPLORE = "Explore"
     _OPTION_QUIT = "Quit"
     _OPTION_MOVE_TO_SEARCH_MODE = "Move to search mode"
+    _OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE = "Move to interactive search mode"
 
     _MODE_NAVIGATION = 'navigation'
     _MODE_SEARCH = 'search'
+    _MODE_INTERACTIVE_SEARCH = 'interactive search'
     _MODE_QUIT = 'quit'
+
+    _INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES = 1
+    _INTERACTIVE_SEARCH_RESULT_SERACH_ENDED = 2
 
     def __init__(self, tree, min_nr_options=0, max_nr_options=None, tree_header=None):
         self._original_tree = tree
@@ -28,7 +33,7 @@ class TreePicker(object):
         self._sorted_children_by_nid_cache = dict()
         self._mode = self._MODE_NAVIGATION
         self._print_tree_once = True
-        self._search_pattern = None
+        self._search_pattern = ""
         self._nodes_that_match_search_filter = dict()
         self._tree_header = tree_header
 
@@ -53,6 +58,15 @@ class TreePicker(object):
                     return result
             elif self._mode == self._MODE_SEARCH:
                 self._search()
+                self._mode = self._MODE_NAVIGATION
+            elif self._mode == self._MODE_INTERACTIVE_SEARCH:
+                result = self._interactive_search_iteration()
+                if result == self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED:
+                    self._mode = self._MODE_NAVIGATION
+                else:
+                    treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                                        max_nr_lines, self._search_pattern, self._tree_header,
+                                        show_search_pattern_if_empty=True)
             elif self._mode == self._MODE_QUIT:
                 break
             else:
@@ -65,9 +79,6 @@ class TreePicker(object):
         if self._search_pattern:
             self._scan_nodes_that_match_search_pattern()
             self._filter_nodes_that_match()
-        else:
-            self._search_pattern = None
-        self._mode = self._MODE_NAVIGATION
         if self._selected_node.identifier not in self._tree.nodes:
             self._selected_node = self._tree.get_node(self._tree.root)
             assert self._selected_node is not None
@@ -84,14 +95,12 @@ class TreePicker(object):
         while True:
             for nid, node in self._tree.nodes.iteritems():
                 if nid not in self._nodes_that_match_search_filter:
-                    self._tree.remove_subtree(node.identifier)
+                    self._tree.remove_node(node.identifier)
                     break
             else:
                 break
 
     def _navigate(self, max_nr_lines, min_nr_options, max_nr_options, including_root):
-        if self._search_pattern is not None:
-            self._filter_nodes_that_match()
         if self._print_tree_once:
             treeprinter.print_tree(self._tree, self._selected_node, self._picked,
                                    max_nr_lines, self._search_pattern, self._tree_header)
@@ -127,9 +136,33 @@ class TreePicker(object):
         elif option == self._OPTION_MOVE_TO_SEARCH_MODE:
             if self._mode == self._MODE_NAVIGATION:
                 self._mode = self._MODE_SEARCH
+        elif option == self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE:
+            self._mode = self._MODE_INTERACTIVE_SEARCH
+            self._search_pattern = ""
+            treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                                   max_nr_lines, self._search_pattern, self._tree_header,
+                                   show_search_pattern_if_empty=True)
         else:
             assert False, option
         return None
+
+    def _interactive_search_iteration(self):
+        result = self._scan_char_in_interactive_search()
+        if result == self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED:
+            if not self._search_pattern:
+                self._tree = treelib.Tree(self._original_tree, deep=True)
+        elif result == self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES:
+            self._tree = treelib.Tree(self._original_tree, deep=True)
+            self._scan_nodes_that_match_search_pattern()
+            self._filter_nodes_that_match()
+            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES
+        else:
+            assert False, result
+        if self._selected_node.identifier not in self._tree.nodes:
+            self._selected_node = self._tree.get_node(self._tree.root)
+            assert self._selected_node is not None
+        self._sorted_children_by_nid_cache = dict()
+        return result
 
     def _sorted_children(self, node):
         nid = node.identifier
@@ -175,13 +208,33 @@ class TreePicker(object):
                          'l': self._OPTION_EXPLORE,
                          'h': self._OPTION_UP,
                          'q': self._OPTION_QUIT,
-                         '/': self._OPTION_MOVE_TO_SEARCH_MODE,
+                         chr(3): self._OPTION_QUIT,
+                         's': self._OPTION_MOVE_TO_SEARCH_MODE,
+                         '/': self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE,
                          chr(13): self._OPTION_RETURN,
                          chr(32): self._OPTION_TOGGLE}
         key = None
         while key not in key_to_option:
             key = getcher.GetchUnix()()
         return key_to_option[key]
+
+    def _scan_char_in_interactive_search(self):
+        key = getcher.GetchUnix()()
+        result = self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES
+        if key == chr(13):
+            key = None
+            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED
+        elif key == chr(127):
+            if self._search_pattern:
+                self._search_pattern = self._search_pattern[:-1]
+        elif ord(key) in (8, 21, 23):
+            self._search_pattern = ""
+        elif key == chr(3):
+            self._search_pattern = ""
+            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED
+        else:
+            self._search_pattern += key
+        return result
 
     def _toggle(self):
         if self._selected_node.identifier in self._picked:

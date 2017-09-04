@@ -8,7 +8,8 @@ import treelib_printwrapper
 _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
 
 
-def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=None, tree_header=None):
+def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=None,
+               tree_header=None, show_search_pattern_if_empty=False):
     # Not using a generator since computation is slow while iterating, during which the screen is clear
     tree_lines = list(_get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines))
     printer.clear_screen()
@@ -16,7 +17,8 @@ def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=N
         printer.print_string(tree_header)
     for index, (line, color) in enumerate(tree_lines):
         printer.print_string(line, color)
-    info_line = _get_info_lines(selected_node, search_pattern, picked_nodes)
+    info_line = _get_info_lines(selected_node, search_pattern, picked_nodes,
+                                show_search_pattern_if_empty)
     printer.print_string(info_line)
 
 
@@ -51,16 +53,18 @@ def _get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines):
         yield line, color
 
 
-def _get_info_lines(selected_node, search_pattern, picked_nodes):
+def _get_info_lines(selected_node, search_pattern, picked_nodes,
+                    show_search_pattern_if_empty=False):
     if selected_node.data is None:
         label = selected_node.tag
     else:
         label = selected_node.data
-    line = 'Current: %s' % (label,)
+    header = 'Current: %s' % (label,)
+    header += ", %d items selected" % (len(picked_nodes),)
     if search_pattern is not None:
-        line += ', Search filter: %s' % (search_pattern,)
-    line += ", %d items selected" % (len(picked_nodes),)
-    return line
+        if search_pattern or show_search_pattern_if_empty:
+            header += '\nSearch filter: %s' % (search_pattern.strip(),)
+    return header
 
 
 def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
