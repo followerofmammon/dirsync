@@ -9,7 +9,8 @@ _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
 
 
 def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern="",
-               tree_header=None, show_search_pattern_if_empty=False):
+               tree_header=None, show_search_pattern_if_empty=False,
+               is_search_patterh_being_edited=False):
     # Not using a generator since computation is slow while iterating, during which the screen is clear
     tree_lines = list(_get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines))
     printer.clear_screen()
@@ -17,9 +18,8 @@ def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern="
         printer.print_string(tree_header)
     for index, (line, color) in enumerate(tree_lines):
         printer.print_string(line, color)
-    info_line = _get_info_lines(selected_node, search_pattern, picked_nodes,
-                                show_search_pattern_if_empty)
-    printer.print_string(info_line)
+    _print_info_lines(selected_node, search_pattern, picked_nodes,
+                      show_search_pattern_if_empty, is_search_patterh_being_edited)
 
 
 def _node_key(node):
@@ -53,17 +53,22 @@ def _get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines):
         yield line, color
 
 
-def _get_info_lines(selected_node, search_pattern, picked_nodes,
-                    show_search_pattern_if_empty=False):
+def _print_info_lines(selected_node, search_pattern, picked_nodes,
+                    show_search_pattern_if_empty=False, is_search_patterh_being_edited=False):
     if selected_node.data is None:
         label = selected_node.tag
     else:
         label = selected_node.data
-    header = 'Current: %s' % (label,)
-    header += ", %d items selected" % (len(picked_nodes),)
+    header = "Current: %s, %d items selected" % (label, len(picked_nodes))
+    printer.print_string(header)
     if search_pattern or show_search_pattern_if_empty:
-        header += '\nSearch filter: %s' % (search_pattern.strip(),)
-    return header
+        if is_search_patterh_being_edited:
+            header = '\nInsert Search filter:\t%s' % (search_pattern.strip(),)
+            color = "purple"
+        else:
+            header = '\nCurrent Search filter:\t%s' % (search_pattern.strip(),)
+            color = "yellow"
+        printer.print_string(header, color)
 
 
 def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):

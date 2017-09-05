@@ -71,7 +71,8 @@ class TreePicker(object):
                 else:
                     treeprinter.print_tree(self._tree, self._selected_node, self._picked,
                                         max_nr_lines, self._search_pattern, self._tree_header,
-                                        show_search_pattern_if_empty=True)
+                                        show_search_pattern_if_empty=True,
+                                        is_search_patterh_being_edited=True)
             elif self._mode == self._MODE_QUIT:
                 break
             else:
@@ -157,7 +158,8 @@ class TreePicker(object):
             self._search_pattern = ""
             treeprinter.print_tree(self._tree, self._selected_node, self._picked,
                                    max_nr_lines, self._search_pattern, self._tree_header,
-                                   show_search_pattern_if_empty=True)
+                                   show_search_pattern_if_empty=True,
+                                   is_search_patterh_being_edited=True)
         else:
             assert False, option
         return None
