@@ -39,6 +39,7 @@ class _CursesWindowPrinter(object):
         self._window = window
         self._initialize_colors()
         self._lines = []
+        self._asd = open('asd', 'w')
 
     def _initialize_colors(self):
         curses.start_color()
@@ -62,7 +63,7 @@ class _CursesWindowPrinter(object):
             self._window.refresh()
 
     def _print_missing_lines(self, window_height, max_width):
-        max_possible_index = min(window_height, len(self._lines)) - 2
+        max_possible_index = min(window_height, len(self._lines)) - 1
         while self._index_of_last_drawn_line < max_possible_index:
             self._index_of_last_drawn_line += 1
             line, color = self._lines[self._index_of_last_drawn_line]
@@ -80,10 +81,12 @@ class _CursesWindowPrinter(object):
         else:
             color = curses.color_pair(self._COLOR_NAME_TO_NUMBEER[color])
         self._window.addstr(line_index, 0, line, color)
+        self._asd.write(line + str(line_index) + "\n")
+        self._asd.flush()
 
     def print_string(self, string, color=None):
         for line in string.splitlines():
-            self._lines.append((string, color))
+            self._lines.append((line, color))
         self._draw()
 
     def clear_screen(self):

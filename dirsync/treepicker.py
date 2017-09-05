@@ -63,6 +63,7 @@ class TreePicker(object):
             elif self._mode == self._MODE_SEARCH:
                 self._search()
                 self._mode = self._MODE_NAVIGATION
+                self._print_tree_once = True
             elif self._mode == self._MODE_INTERACTIVE_SEARCH:
                 result = self._interactive_search_iteration()
                 if result == self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED:
@@ -78,7 +79,7 @@ class TreePicker(object):
 
     def _search(self):
         printer.print_string("Type a regex search filter:")
-        self._search_pattern = raw_input()
+        self._search_pattern = printer._printer._window.getstr(40, 50)
         self._tree = treelib.Tree(self._original_tree, deep=True)
         if self._search_pattern:
             self._scan_nodes_that_match_search_pattern()
@@ -91,7 +92,8 @@ class TreePicker(object):
     def _scan_nodes_that_match_search_pattern(self):
         self._nodes_that_match_search_filter = {self._tree.root: True}
         for nid, node in self._tree.nodes.iteritems():
-            if re.findall(self._search_pattern, node.tag):
+            node_data = node.tag if node.data is None else str(node.data)
+            if re.findall(self._search_pattern, node_data):
                 for ancestor_nid in self._tree.rsearch(nid):
                     self._nodes_that_match_search_filter[ancestor_nid] = True
 

@@ -8,7 +8,7 @@ import treelib_printwrapper
 _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME = "____UNLIKELY____999999____SHADAG"
 
 
-def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern=None,
+def print_tree(tree, selected_node, picked_nodes, max_nr_lines, search_pattern="",
                tree_header=None, show_search_pattern_if_empty=False):
     # Not using a generator since computation is slow while iterating, during which the screen is clear
     tree_lines = list(_get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines))
@@ -61,9 +61,8 @@ def _get_info_lines(selected_node, search_pattern, picked_nodes,
         label = selected_node.data
     header = 'Current: %s' % (label,)
     header += ", %d items selected" % (len(picked_nodes),)
-    if search_pattern is not None:
-        if search_pattern or show_search_pattern_if_empty:
-            header += '\nSearch filter: %s' % (search_pattern.strip(),)
+    if search_pattern or show_search_pattern_if_empty:
+        header += '\nSearch filter: %s' % (search_pattern.strip(),)
     return header
 
 
