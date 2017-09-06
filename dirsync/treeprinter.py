@@ -64,7 +64,7 @@ def _print_info_lines(selected_node, search_pattern, picked_nodes,
     if search_pattern or show_search_pattern_if_empty:
         if is_search_patterh_being_edited:
             header = '\nInsert Search filter:\t%s' % (search_pattern.strip(),)
-            color = "purple"
+            color = "magenta"
         else:
             header = '\nCurrent Search filter:\t%s' % (search_pattern.strip(),)
             color = "yellow"

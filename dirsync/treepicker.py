@@ -26,8 +26,8 @@ class TreePicker(object):
     _MODE_INTERACTIVE_SEARCH = 'interactive search'
     _MODE_QUIT = 'quit'
 
-    _INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES = 1
-    _INTERACTIVE_SEARCH_RESULT_SERACH_ENDED = 2
+    _SERACH_RESULT_SERACH_CONTINUES = 1
+    _SEARCH_RESULT_SERACH_ENDED = 2
 
     def __init__(self, tree, min_nr_options=0, max_nr_options=None, tree_header=None):
         self._original_tree = tree
@@ -61,12 +61,19 @@ class TreePicker(object):
                 if result is not None:
                     return result
             elif self._mode == self._MODE_SEARCH:
-                self._search()
-                self._mode = self._MODE_NAVIGATION
-                self._print_tree_once = True
+                # printer.print_string("Type a regex search filter: %s" % (self._search_pattern,))
+                result = self._search()
+                if result == self._SEARCH_RESULT_SERACH_ENDED:
+                    self._mode = self._MODE_NAVIGATION
+                else:
+                    treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                                        max_nr_lines, self._search_pattern, self._tree_header,
+                                        show_search_pattern_if_empty=True,
+                                        is_search_patterh_being_edited=True)
             elif self._mode == self._MODE_INTERACTIVE_SEARCH:
+                printer.print_string("Type a regex search filter: %s" % (self._search_pattern,))
                 result = self._interactive_search_iteration()
-                if result == self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED:
+                if result == self._SEARCH_RESULT_SERACH_ENDED:
                     self._mode = self._MODE_NAVIGATION
                 else:
                     treeprinter.print_tree(self._tree, self._selected_node, self._picked,
@@ -79,16 +86,18 @@ class TreePicker(object):
                 raise ValueError(self._mode)
 
     def _search(self):
-        printer.print_string("Type a regex search filter:")
-        self._search_pattern = printer._printer._window.getstr(40, 50)
-        self._tree = treelib.Tree(self._original_tree, deep=True)
-        if self._search_pattern:
-            self._scan_nodes_that_match_search_pattern()
-            self._filter_nodes_that_match()
-        if self._selected_node.identifier not in self._tree.nodes:
-            self._selected_node = self._tree.get_node(self._tree.root)
-            assert self._selected_node is not None
-        self._sorted_children_by_nid_cache = dict()
+        result = self._scan_char_in_interactive_search()
+        if result == self._SEARCH_RESULT_SERACH_ENDED:
+            self._tree = treelib.Tree(self._original_tree, deep=True)
+            if self._search_pattern:
+                self._scan_nodes_that_match_search_pattern()
+                self._filter_nodes_that_match()
+            self._selected_node = self._tree.get_node(self._selected_node.identifier)
+            if self._selected_node is None:
+                self._selected_node = self._tree.get_node(self._tree.root)
+                assert self._selected_node is not None
+            self._sorted_children_by_nid_cache = dict()
+        return result
 
     def _scan_nodes_that_match_search_pattern(self):
         self._nodes_that_match_search_filter = {self._tree.root: True}
@@ -112,7 +121,7 @@ class TreePicker(object):
             treeprinter.print_tree(self._tree, self._selected_node, self._picked,
                                    max_nr_lines, self._search_pattern, self._tree_header)
         self._print_tree_once = True
-        option = self._scan_option()
+        option = self._scan_search_key()
         if option == self._OPTION_NEXT:
             success = self._move_selection_relative(distance=1)
             self._print_tree_once = success
@@ -153,6 +162,11 @@ class TreePicker(object):
         elif option == self._OPTION_MOVE_TO_SEARCH_MODE:
             if self._mode == self._MODE_NAVIGATION:
                 self._mode = self._MODE_SEARCH
+                self._search_pattern = ""
+                treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                                    max_nr_lines, self._search_pattern, self._tree_header,
+                                    show_search_pattern_if_empty=True,
+                                    is_search_patterh_being_edited=True)
         elif option == self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE:
             self._mode = self._MODE_INTERACTIVE_SEARCH
             self._search_pattern = ""
@@ -166,17 +180,18 @@ class TreePicker(object):
 
     def _interactive_search_iteration(self):
         result = self._scan_char_in_interactive_search()
-        if result == self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED:
+        if result == self._SEARCH_RESULT_SERACH_ENDED:
             if not self._search_pattern:
                 self._tree = treelib.Tree(self._original_tree, deep=True)
-        elif result == self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES:
+        elif result == self._SERACH_RESULT_SERACH_CONTINUES:
             self._tree = treelib.Tree(self._original_tree, deep=True)
             self._scan_nodes_that_match_search_pattern()
             self._filter_nodes_that_match()
-            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES
+            result = self._SERACH_RESULT_SERACH_CONTINUES
         else:
             assert False, result
-        if self._selected_node.identifier not in self._tree.nodes:
+        self._selected_node = self._tree.get_node(self._selected_node.identifier)
+        if self._selected_node is None:
             self._selected_node = self._tree.get_node(self._tree.root)
             assert self._selected_node is not None
         self._sorted_children_by_nid_cache = dict()
@@ -227,7 +242,7 @@ class TreePicker(object):
             return True
         return False
 
-    def _scan_option(self):
+    def _scan_search_key(self):
         key_to_option = {'j': self._OPTION_NEXT,
                          'k': self._OPTION_PREV,
                          'l': self._OPTION_EXPLORE,
@@ -252,10 +267,10 @@ class TreePicker(object):
 
     def _scan_char_in_interactive_search(self):
         key = getcher.GetchUnix()()
-        result = self._INTERACTIVE_SEARCH_RESULT_SERACH_CONTINUES
+        result = self._SERACH_RESULT_SERACH_CONTINUES
         if key == chr(13):
             key = None
-            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED
+            result = self._SEARCH_RESULT_SERACH_ENDED
         elif key == chr(127):
             if self._search_pattern:
                 self._search_pattern = self._search_pattern[:-1]
@@ -263,7 +278,7 @@ class TreePicker(object):
             self._search_pattern = ""
         elif key == chr(3):
             self._search_pattern = ""
-            result = self._INTERACTIVE_SEARCH_RESULT_SERACH_ENDED
+            result = self._SEARCH_RESULT_SERACH_ENDED
         else:
             self._search_pattern += key
         return result
