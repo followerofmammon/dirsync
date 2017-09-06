@@ -61,7 +61,6 @@ class TreePicker(object):
                 if result is not None:
                     return result
             elif self._mode == self._MODE_SEARCH:
-                # printer.print_string("Type a regex search filter: %s" % (self._search_pattern,))
                 result = self._search()
                 if result == self._SEARCH_RESULT_SERACH_ENDED:
                     self._mode = self._MODE_NAVIGATION
@@ -71,7 +70,6 @@ class TreePicker(object):
                                         show_search_pattern_if_empty=True,
                                         is_search_patterh_being_edited=True)
             elif self._mode == self._MODE_INTERACTIVE_SEARCH:
-                printer.print_string("Type a regex search filter: %s" % (self._search_pattern,))
                 result = self._interactive_search_iteration()
                 if result == self._SEARCH_RESULT_SERACH_ENDED:
                     self._mode = self._MODE_NAVIGATION
