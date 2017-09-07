@@ -1,4 +1,5 @@
 import re
+import os
 import treelib
 
 import getcher
@@ -298,7 +299,6 @@ class TreePicker(object):
 
 
 if __name__ == '__main__':
-    import treelib
     thetree = treelib.Tree()
     root_ = thetree.create_node(identifier='rootnodeid', tag='rootnodetag', data='rootnodeval')
     for i in range(5) + range(10, 15):
@@ -316,8 +316,7 @@ if __name__ == '__main__':
 
     treepicker = TreePicker(thetree)
 
-    import os
-    if os.getenv('MODE') == 'interactive':
+    if os.getenv('MODE') == 'static':
         printer.wrapper(treepicker.pick, max_nr_lines=25)
     else:
         print treepicker.pick(max_nr_lines=25)

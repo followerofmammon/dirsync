@@ -36,7 +36,7 @@ def main():
 
 
 if __name__ == "__main__":
-    if os.getenv('MODE') == 'interactive':
+    if os.getenv('MODE') == 'static':
         printer.wrapper(main)
     else:
         main()

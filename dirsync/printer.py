@@ -1,4 +1,5 @@
 import curses
+import locale
 import termcolor
 
 
@@ -20,6 +21,8 @@ def wrapper(main, *args, **kwargs):
         _printer = _CursesWindowPrinter(window)
         main(*args, **kwargs)
 
+    locale.setlocale(locale.LC_ALL,"")
+    curses.initscr()
     curses.wrapper(store_window_and_run)
 
 
@@ -70,10 +73,6 @@ class _CursesWindowPrinter(object):
             self._print_line(line, color, self._index_of_last_drawn_line, max_width)
 
     def _print_line(self, line, color, line_index, max_width):
-        line = line.replace('\xe2\x94\x80', '-')
-        line = line.replace('\xe2\x94\x82', '|')
-        line = line.replace('\xe2\x94\x9c', '+')
-        line = line.replace('\xe2\x94\x94', '+')
         if len(line) >= max_width:
             line = line[:max_width]
         if color is None:

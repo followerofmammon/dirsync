@@ -23,7 +23,7 @@ if __name__ == "__main__":
     else:
         _path = 'alpha'
     picker = FilesystemPicker(_path)
-    if os.getenv('MODE') == 'interactive':
+    if os.getenv('MODE') == 'static':
         printer.wrapper(picker.pick)
     else:
         picker.pick()
