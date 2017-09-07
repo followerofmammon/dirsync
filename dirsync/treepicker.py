@@ -202,6 +202,8 @@ class TreePicker(object):
         return self._sorted_children_by_nid_cache[nid]
 
     def _get_siblings(self):
+        if self._selected_node.identifier == self._tree.root:
+            return [self._tree.get_node(self._tree.root)]
         parent = self._tree.get_node(self._selected_node.bpointer)
         return self._sorted_children(parent)
 
