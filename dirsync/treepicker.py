@@ -7,6 +7,7 @@ import treesearch
 import linescanner
 import treeprinter
 import treenavigator
+import treepicker_keybindings
 
 
 class TreePicker(object):
@@ -33,15 +34,11 @@ class TreePicker(object):
 
     def pick_one(self):
         choices = self.pick(min_nr_options=1, max_nr_options=1)
-        if not choices:
-            return None
-        return choices[0]
+        return None if not choices else choices[0]
 
     def pick(self, min_nr_options=None, max_nr_options=None):
-        if min_nr_options is not None:
-            self._min_nr_options = min_nr_options
-        if max_nr_options is not None:
-            self._max_nr_options = max_nr_options
+        self._min_nr_options = self._min_nr_options if min_nr_options is None else min_nr_options
+        self._max_nr_options = self._max_nr_options if max_nr_options is None else max_nr_options
         print_tree_once = True
         picked = None
         while picked is None:
@@ -88,7 +85,7 @@ class TreePicker(object):
             selected_node = self._tree_navigator.get_selected_node()
             self._picked = {selected_node.identifier: selected_node}
             self._mode = self._MODE_RETURN
-        if self._min_nr_options <= len(self._picked) <= self._max_nr_options:
+        elif self._min_nr_options <= len(self._picked) <= self._max_nr_options:
             self._mode = self._MODE_RETURN
 
     def _filter_tree_entries_by_search_pattern(self):
@@ -130,22 +127,7 @@ class TreePicker(object):
         self._navigation_actions.add_action('toggle', self._toggle)
         self._navigation_actions.add_action('page_up', self._tree_navigator.page_up)
         self._navigation_actions.add_action('page_down', self._tree_navigator.page_down)
-        self._navigation_actions.bind('j', 'next')
-        self._navigation_actions.bind('k', 'previous')
-        self._navigation_actions.bind('l', 'explore')
-        self._navigation_actions.bind('h', 'up')
-        self._navigation_actions.bind('q', 'quit')
-        self._navigation_actions.bind('G', 'last_node')
-        self._navigation_actions.bind('g', 'first_node')
-        self._navigation_actions.bind(chr(3), 'quit')  # Ctrl-C
-        self._navigation_actions.bind('/', 'start_search')
-        self._navigation_actions.bind(chr(16), 'start_interactive_search')  # Ctrl-P
-        self._navigation_actions.bind(chr(13), 'return_picked_nodes')  # Return
-        self._navigation_actions.bind(chr(32), 'toggle')  # Space
-        self._navigation_actions.bind(chr(4), 'page_down')  # Ctrl-D
-        self._navigation_actions.bind(chr(21), 'page_up')  # Ctrl-U
-        self._navigation_actions.bind('u', 'page_up')
-        self._navigation_actions.bind('d', 'page_down')
+        treepicker_keybindings.populate_bindings(self._navigation_actions)
 
     def _toggle(self):
         selected_node = self._tree_navigator.get_selected_node()
