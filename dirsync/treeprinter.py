@@ -73,7 +73,7 @@ def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):
 
     # Increase the level of printing until reaching limit of #lines
     max_depth = tree.depth()
-    while max_depth >= 1 and max_depth > tree.depth(selected_node):
+    while max_depth >= 2:
         nodes_in_current_depth = [node for node in tree.nodes if tree.depth(node) <= max_depth]
         if len(nodes_in_current_depth) > max_nr_lines:
             max_depth -= 1
