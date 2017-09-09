@@ -2,8 +2,8 @@ class TreeNavigator(object):
     def __init__(self, tree, including_root):
         self._tree = tree
         self._including_root = including_root
-        self._selected_node = self._calculate_initial_node()
         self._sorted_children_by_nid_cache = dict()
+        self._selected_node = self._calculate_initial_node()
 
     def get_selected_node(self):
         return self._selected_node

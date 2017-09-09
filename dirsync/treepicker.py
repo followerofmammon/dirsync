@@ -135,11 +135,11 @@ class TreePicker(object):
         if self._min_nr_options == self._max_nr_options == 1:
             return
         if selected_node.identifier in self._picked:
-            toggle_node = self._select_node
-        else:
             toggle_node = self._unselect_node
+        else:
+            toggle_node = self._select_node
         toggle_node(selected_node)
-        for nid, node in self._tree.subtree(selected_node.identifier).nodes.itervalues():
+        for node in self._tree.subtree(selected_node.identifier).nodes.itervalues():
             toggle_node(node)
 
     def _select_node(self, node):
