@@ -13,7 +13,7 @@ def search(replica_a_path, replica_b_path):
     if replica_a_path is None and replica_b_path is None:
         replica_a_path, replica_b_path = _search_replicas(nr_replicas=2)
     elif replica_b_path is None:
-        replica_b_path = _search_replicas(nr_replicas=1, filter_out=replica_a_path)
+        replica_b_path = _search_replicas(nr_replicas=1, filter_out=replica_a_path)[0]
     else:
         assert replica_a_path is not None
         assert replica_b_path is not None

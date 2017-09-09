@@ -67,7 +67,7 @@ class TreePicker(object):
                 picked = list()
             else:
                 raise ValueError(self._mode)
-        return picked
+        return [node.data for node in picked]
 
     def _capture_state(self):
         picked = hash(str(self._picked.keys()))
