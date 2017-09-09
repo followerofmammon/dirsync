@@ -37,6 +37,10 @@ class TreeNavigator(object):
     def page_up(self):
         self._move_selection_relative(istance=-4)
 
+    def set_tree(self, tree):
+        self._tree = tree
+        self._selected_node = self._calculate_initial_node()
+
     def _move_selection_relative(self, distance):
         siblings = self._get_siblings()
         wanted_index = siblings.index(self._selected_node) + distance
@@ -70,7 +74,3 @@ class TreeNavigator(object):
             return [self._tree.get_node(self._tree.root)]
         parent = self._tree.get_node(self._selected_node.bpointer)
         return self._sorted_children(parent)
-
-    def _set_tree(self, tree):
-        self._tree = tree
-        self._selected_node = self._calculate_initial_node()

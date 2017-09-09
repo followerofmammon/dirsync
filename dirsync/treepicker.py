@@ -17,7 +17,7 @@ class TreePicker(object):
     _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
 
-    def __init__(self, tree, including_root=True, tree_header=None, max_nr_lines=25):
+    def __init__(self, tree, including_root=True, header=None, max_nr_lines=25):
         self._original_tree = tree
         self._tree = treelib.Tree(self._original_tree, deep=True)
         self._min_nr_options = 0
@@ -25,12 +25,13 @@ class TreePicker(object):
         self._max_nr_lines = max_nr_lines
         self._picked = dict()
         self._mode = self._MODE_NAVIGATION
-        self._tree_header = tree_header
+        self._header = header
         self._tree_search = treesearch.TreeSearch(self._tree)
         self._line_scanner = linescanner.LineScanner()
         self._navigation_actions = keybind.KeyBind()
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
         self._register_key_bindings()
+        self._tree_printer = treeprinter.TreePrinter(self._tree)
 
     def pick_one(self):
         choices = self.pick(min_nr_options=1, max_nr_options=1)
@@ -91,14 +92,17 @@ class TreePicker(object):
     def _filter_tree_entries_by_search_pattern(self):
         search_pattern = self._line_scanner.get_line()
         self._tree = self._tree_search.get_filtered_tree(search_pattern)
-        self._tree_navigator._set_tree(self._tree)
+        self._tree_navigator.set_tree(self._tree)
+        self._tree_printer.set_tree(self._tree)
 
     def _print_tree(self):
         selected_node = self._tree_navigator.get_selected_node()
-        treeprinter.print_tree(self._tree, selected_node, self._picked, self._max_nr_lines,
-                               self._line_scanner.get_line(), self._tree_header,
-                               show_search_pattern_if_empty=True)
         search_pattern = self._line_scanner.get_line()
+        self._tree_printer.calculate_lines_to_print(selected_node, self._picked, self._max_nr_lines)
+        printer.clear_screen()
+        if self._header is not None:
+            printer.print_string(self._header)
+        self._tree_printer.print_tree()
         footer = ""
         is_search_pattern_being_edited = self._mode in (self._MODE_SEARCH, self._MODE_INTERACTIVE_SEARCH)
         if is_search_pattern_being_edited:
@@ -166,7 +170,7 @@ if __name__ == '__main__':
         name = "grandgrandson%d" % (i * 11,)
         thetree.create_node(name, name, parent='grandson8', data=name)
 
-    treepicker = TreePicker(thetree)
+    treepicker = TreePicker(thetree, header='stuff:')
 
     if os.getenv('MODE') == 'static':
         printer.wrapper(treepicker.pick)
