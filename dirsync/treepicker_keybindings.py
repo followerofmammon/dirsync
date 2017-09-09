@@ -15,4 +15,3 @@ def populate_bindings(keybind):
     keybind.bind(chr(21), 'page_up')  # Ctrl-U
     keybind.bind('u', 'page_up')
     keybind.bind('d', 'page_down')
-
