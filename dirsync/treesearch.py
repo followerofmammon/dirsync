@@ -9,11 +9,13 @@ class TreeSearch(object):
         self._tree = None
         self._getcher = getcher.GetchUnix()
         self._previous_pattern = None
+        self._nodes_that_match_search_filter = dict()
 
     def get_filtered_tree(self, pattern):
         self._tree = treelib.Tree(self._original_tree, deep=True)
-        self._scan_nodes_that_match_search_pattern(pattern)
-        self._filter_matching_nodes()
+        if pattern:
+            self._scan_nodes_that_match_search_pattern(pattern)
+            self._filter_matching_nodes()
         self._previous_pattern = pattern
         return self._tree
 
@@ -46,8 +48,3 @@ class TreeSearch(object):
             result = self._SERACH_RESULT_SERACH_CONTINUES
         else:
             assert False, result
-        self._selected_node = self._tree.get_node(self._selected_node.identifier)
-        if self._selected_node is None:
-            self._selected_node = self._tree.get_node(self._tree.root)
-            assert self._selected_node is not None
-        return result
