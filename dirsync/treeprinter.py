@@ -69,17 +69,22 @@ class TreePrinter(object):
     def _get_max_possible_depth(self, tree, max_nr_lines):
         node_counter = 0
         bfs_queue = [(tree.get_node(tree.root), 0)]
-        depth = 0
         self._nodes_by_depth_cache = dict()
+        max_depth = -1
+        depth = 0
+        selected_node_depth = tree.depth(self._selected_node.identifier)
         while bfs_queue:
             node, depth = bfs_queue.pop(0)
+            if depth - 1 > max_depth and node_counter <= max_nr_lines:
+                max_depth = depth - 1
             node_counter += 1
-            if node_counter > max_nr_lines:
-                break
+            if depth < selected_node_depth or node_counter < max_nr_lines:
+                for child in tree.children(node.identifier):
+                    bfs_queue.append((child, depth + 1))
             self._nodes_by_depth_cache.setdefault(depth, list()).append(node)
-            for child in tree.children(node.identifier):
-                bfs_queue.append((child, depth + 1))
-        return max(depth - 1, tree.depth(self._selected_node.identifier))
+        if node_counter <= max_nr_lines and depth > max_depth:
+            max_depth = depth
+        return max(max_depth, selected_node_depth)
 
     def _prepare_tree_for_printing(self, max_nr_lines):
         # Find root node from which to print tree
