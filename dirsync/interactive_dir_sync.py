@@ -5,8 +5,6 @@ import optionpicker
 
 
 class InteractiveDirSync(object):
-    MAX_NR_LINES = 20
-
     _OPTION_COPY = "Copy selected files"
     _OPTION_REMOVE = "Remove selected files"
     _OPTION_NOTHING = "Do nothing"
@@ -50,8 +48,8 @@ class InteractiveDirSync(object):
         tree_header = ("Files in %s, which are not in %s:\n"
                        "(To select a file, press Space. When finished, press Enter.)" %
                        (self._src, self._dst))
-        tree_picker = treepicker.TreePicker(missing, tree_header=tree_header)
-        entries = tree_picker.pick(self.MAX_NR_LINES)
+        tree_picker = treepicker.TreePicker(missing, header=tree_header)
+        entries = tree_picker.pick()
         if entries is None:
             return None
         files = [entry for entry in entries if isinstance(entry, dirtree.FileEntry)]
