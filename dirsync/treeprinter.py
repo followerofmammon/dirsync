@@ -54,21 +54,13 @@ def _get_tree_lines(tree, selected_node, picked_nodes, max_nr_lines):
 
 
 def _print_info_lines(selected_node, search_pattern, picked_nodes,
-                    show_search_pattern_if_empty=False, is_search_patterh_being_edited=False):
+                      show_search_pattern_if_empty=False, is_search_patterh_being_edited=False):
     if selected_node.data is None:
         label = selected_node.tag
     else:
         label = selected_node.data
     header = "Current: %s, %d items selected" % (label, len(picked_nodes))
     printer.print_string(header)
-    if search_pattern or show_search_pattern_if_empty:
-        if is_search_patterh_being_edited:
-            header = '\nInsert Search filter:\t%s' % (search_pattern.strip(),)
-            color = "magenta"
-        else:
-            header = '\nCurrent Search filter:\t%s' % (search_pattern.strip(),)
-            color = "yellow"
-        printer.print_string(header, color)
 
 
 def _prepare_tree_for_printing(tree, selected_node, max_nr_lines):

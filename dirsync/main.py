@@ -29,6 +29,7 @@ def sync(replica_a, replica_b):
         elif option is None:
             break
 
+
 def main():
     replica_a_path, replica_b_path = replicas_from_args.get()
     replica_a_path, replica_b_path = search_supplement_replicas.search(replica_a_path, replica_b_path)

@@ -14,9 +14,8 @@ def get_tree_output(tree, nid=None, level=treelib.Tree.ROOT, idhidden=True, filt
 
     try:
         tree._Tree__print_backend(nid, level, idhidden, filter,
-            key, reverse, line_type, data_property, func=write)
+                                  key, reverse, line_type, data_property, func=write)
     except treelib.tree.NodeIDAbsentError:
         print('Tree is empty')
 
     return tree.reader.encode('utf-8')
-

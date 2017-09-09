@@ -1,200 +1,125 @@
-import re
 import os
 import treelib
 
-import getcher
+import keybind
 import printer
+import treesearch
+import linescanner
 import treeprinter
 
 
 class TreePicker(object):
-    _OPTION_NEXT = "Down"
-    _OPTION_PREV = "Previous"
-    _OPTION_UP = "Up"
-    _OPTION_TOGGLE = "Toggle"
-    _OPTION_RETURN = "Enter"
-    _OPTION_EXPLORE = "Explore"
-    _OPTION_QUIT = "Quit"
-    _OPTION_MOVE_TO_SEARCH_MODE = "Move to search mode"
-    _OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE = "Move to interactive search mode"
-    _OPTION_MOVE_TO_FIRST_SIBLING = 'Move to first sibling'
-    _OPTION_MOVE_TO_LAST_SIBLING = 'Move to last sibling'
-    _OPTION_PAGE_UP = 'Page up'
-    _OPTION_PAGE_DOWN = 'Page down'
-
     _MODE_NAVIGATION = 'navigation'
     _MODE_SEARCH = 'search'
     _MODE_INTERACTIVE_SEARCH = 'interactive search'
+    _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
 
-    _SERACH_RESULT_SERACH_CONTINUES = 1
-    _SEARCH_RESULT_SERACH_ENDED = 2
-
-    def __init__(self, tree, min_nr_options=0, max_nr_options=None, tree_header=None):
+    def __init__(self, tree, including_root=True, tree_header=None, max_nr_lines=25):
         self._original_tree = tree
-        self._tree = tree
-        self._selected_node = self._tree.get_node(self._original_tree.root)
-        self._picked = dict()
+        self._tree = treelib.Tree(self._original_tree, deep=True)
+        self._min_nr_options = 0
+        self._max_nr_options = len(self._tree)
+        self._max_nr_lines = max_nr_lines
+        self._including_root = including_root
         self._sorted_children_by_nid_cache = dict()
+        self._selected_node = self._calculate_initial_node(self._including_root)
+        self._picked = dict()
         self._mode = self._MODE_NAVIGATION
-        self._print_tree_once = True
-        self._search_pattern = ""
         self._nodes_that_match_search_filter = dict()
         self._tree_header = tree_header
+        self._tree_search = treesearch.TreeSearch(self._tree)
+        self._line_scanner = linescanner.LineScanner()
+        self._navigation_actions = keybind.KeyBind()
+        self._register_key_bindings()
 
-    def pick_one(self, max_nr_lines=10):
-        choices = self.pick(max_nr_lines, including_root=False, min_nr_options=1, max_nr_options=1)
+    def pick_one(self):
+        choices = self.pick(min_nr_options=1, max_nr_options=1)
         if not choices:
             return None
         return choices[0]
 
-    def pick(self, max_nr_lines, including_root=True, min_nr_options=1, max_nr_options=None):
-        if max_nr_options is None:
-            max_nr_options = len(self._tree.nodes)
-        if not including_root:
-            children = self._tree.children(self._tree.root)
-            assert children
-            self._selected_node = self._tree.get_node(self._tree.root)
-            self._explore()
-        while True:
+    def pick(self, min_nr_options=None, max_nr_options=None):
+        if min_nr_options is not None:
+            self._min_nr_options = min_nr_options
+        if max_nr_options is not None:
+            self._max_nr_options = max_nr_options
+        print_tree_once = True
+        picked = list()
+        while self._mode != self._MODE_QUIT:
+            is_search_pattern_being_edited = self._mode in (self._MODE_SEARCH,
+                                                            self._MODE_INTERACTIVE_SEARCH)
+            if print_tree_once:
+                self._print_tree(is_search_pattern_being_edited=is_search_pattern_being_edited)
+            print_tree_once = True
             if self._mode == self._MODE_NAVIGATION:
-                result = self._navigate(max_nr_lines, min_nr_options, max_nr_options, including_root)
-                if result is not None:
-                    return result
+                previous_state = self._capture_state()
+                self._navigation_actions.do_one_action()
+                current_state = self._capture_state()
+                print_tree_once = previous_state != current_state
             elif self._mode == self._MODE_SEARCH:
-                result = self._search()
-                if result == self._SEARCH_RESULT_SERACH_ENDED:
+                result = self._line_scanner.scan_char()
+                if result == linescanner.LineScanner.STATE_EDIT_ENDED:
+                    self._filter_tree_entries_by_search_pattern()
                     self._mode = self._MODE_NAVIGATION
-                else:
-                    treeprinter.print_tree(self._tree, self._selected_node, self._picked,
-                                        max_nr_lines, self._search_pattern, self._tree_header,
-                                        show_search_pattern_if_empty=True,
-                                        is_search_patterh_being_edited=True)
             elif self._mode == self._MODE_INTERACTIVE_SEARCH:
-                result = self._interactive_search_iteration()
-                if result == self._SEARCH_RESULT_SERACH_ENDED:
+                result = self._line_scanner.scan_char()
+                self._filter_tree_entries_by_search_pattern()
+                if result == linescanner.LineScanner.STATE_EDIT_ENDED:
                     self._mode = self._MODE_NAVIGATION
-                else:
-                    treeprinter.print_tree(self._tree, self._selected_node, self._picked,
-                                        max_nr_lines, self._search_pattern, self._tree_header,
-                                        show_search_pattern_if_empty=True,
-                                        is_search_patterh_being_edited=True)
+            elif self._mode == self._MODE_RETURN:
+                picked = self._picked.values()
+                break
             elif self._mode == self._MODE_QUIT:
                 break
             else:
                 raise ValueError(self._mode)
+        return picked
 
-    def _search(self):
-        result = self._scan_char_in_interactive_search()
-        if result == self._SEARCH_RESULT_SERACH_ENDED:
-            self._tree = treelib.Tree(self._original_tree, deep=True)
-            if self._search_pattern:
-                self._scan_nodes_that_match_search_pattern()
-                self._filter_nodes_that_match()
-            self._selected_node = self._tree.get_node(self._selected_node.identifier)
-            if self._selected_node is None:
-                self._selected_node = self._tree.get_node(self._tree.root)
-                assert self._selected_node is not None
+    def _capture_state(self):
+        picked = hash(str(self._picked.keys()))
+        return (picked, self._selected_node.identifier, self._mode)
+
+    def _start_search(self):
+        self._mode = self._MODE_SEARCH
+        self._line_scanner.clear_line()
+
+    def _start_interactive_search(self):
+        self._mode = self._MODE_INTERACTIVE_SEARCH
+        self._line_scanner.clear_line()
+
+    def _return_picked_nodes(self):
+        if self._min_nr_options == self._max_nr_options == 1:
+            self._picked = {self._selected_node.identifier: self._selected_node}
+            self._mode = self._MODE_RETURN
+        if self._min_nr_options <= len(self._picked) <= self._max_nr_options:
+            self._mode = self._MODE_RETURN
+
+    def _filter_tree_entries_by_search_pattern(self):
+        search_pattern = self._line_scanner.get_line()
+        if search_pattern:
             self._sorted_children_by_nid_cache = dict()
-        return result
-
-    def _scan_nodes_that_match_search_pattern(self):
-        self._nodes_that_match_search_filter = {self._tree.root: True}
-        for nid, node in self._tree.nodes.iteritems():
-            node_data = node.tag if node.data is None else str(node.data)
-            if re.findall(self._search_pattern, node_data):
-                for ancestor_nid in self._tree.rsearch(nid):
-                    self._nodes_that_match_search_filter[ancestor_nid] = True
-
-    def _filter_nodes_that_match(self):
-        while True:
-            for nid, node in self._tree.nodes.iteritems():
-                if nid not in self._nodes_that_match_search_filter:
-                    self._tree.remove_node(node.identifier)
-                    break
-            else:
-                break
-
-    def _navigate(self, max_nr_lines, min_nr_options, max_nr_options, including_root):
-        if self._print_tree_once:
-            treeprinter.print_tree(self._tree, self._selected_node, self._picked,
-                                   max_nr_lines, self._search_pattern, self._tree_header)
-        self._print_tree_once = True
-        option = self._scan_search_key()
-        if option == self._OPTION_NEXT:
-            success = self._move_selection_relative(distance=1)
-            self._print_tree_once = success
-        elif option == self._OPTION_PREV:
-            success = self._move_selection_relative(distance=-1)
-            self._print_tree_once = success
-        elif option == self._OPTION_MOVE_TO_FIRST_SIBLING:
-            self._move_selection_absolute(0)
-        elif option == self._OPTION_MOVE_TO_LAST_SIBLING:
-            self._move_selection_absolute(-1)
-        elif option == self._OPTION_PAGE_UP:
-            success = self._move_selection_relative(distance=-4)
-            self._print_tree_once = success
-        elif option == self._OPTION_PAGE_DOWN:
-            success = self._move_selection_relative(distance=4)
-            self._print_tree_once = success
-        elif option == self._OPTION_TOGGLE:
-            if not (min_nr_options == max_nr_options == 1):
-                self._toggle()
-        elif option == self._OPTION_UP:
-            result = self._go_up(including_root=including_root)
-            if not result:
-                self._print_tree_once = False
-        elif option == self._OPTION_EXPLORE:
-            result = False
-            if max_nr_options > 1:
-                result = self._explore()
-            if not result:
-                self._print_tree_once = False
-        elif option == self._OPTION_RETURN:
-            if min_nr_options == max_nr_options == 1:
-                return [self._selected_node.data]
-            if len(self._picked) <= max_nr_options and \
-                    len(self._picked) >= min_nr_options:
-                return self._picked.values()
-        elif option == self._OPTION_QUIT:
-            self._mode = self._MODE_QUIT
-        elif option == self._OPTION_MOVE_TO_SEARCH_MODE:
-            if self._mode == self._MODE_NAVIGATION:
-                self._mode = self._MODE_SEARCH
-                self._search_pattern = ""
-                treeprinter.print_tree(self._tree, self._selected_node, self._picked,
-                                    max_nr_lines, self._search_pattern, self._tree_header,
-                                    show_search_pattern_if_empty=True,
-                                    is_search_patterh_being_edited=True)
-        elif option == self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE:
-            self._mode = self._MODE_INTERACTIVE_SEARCH
-            self._search_pattern = ""
-            treeprinter.print_tree(self._tree, self._selected_node, self._picked,
-                                   max_nr_lines, self._search_pattern, self._tree_header,
-                                   show_search_pattern_if_empty=True,
-                                   is_search_patterh_being_edited=True)
+            self._tree = self._tree_search.get_filtered_tree(search_pattern)
         else:
-            assert False, option
-        return None
-
-    def _interactive_search_iteration(self):
-        result = self._scan_char_in_interactive_search()
-        if result == self._SEARCH_RESULT_SERACH_ENDED:
-            if not self._search_pattern:
-                self._tree = treelib.Tree(self._original_tree, deep=True)
-        elif result == self._SERACH_RESULT_SERACH_CONTINUES:
             self._tree = treelib.Tree(self._original_tree, deep=True)
-            self._scan_nodes_that_match_search_pattern()
-            self._filter_nodes_that_match()
-            result = self._SERACH_RESULT_SERACH_CONTINUES
-        else:
-            assert False, result
         self._selected_node = self._tree.get_node(self._selected_node.identifier)
         if self._selected_node is None:
             self._selected_node = self._tree.get_node(self._tree.root)
-            assert self._selected_node is not None
-        self._sorted_children_by_nid_cache = dict()
-        return result
+
+    def _print_tree(self, is_search_pattern_being_edited=False):
+        treeprinter.print_tree(self._tree, self._selected_node, self._picked,
+                               self._max_nr_lines, self._line_scanner.get_line(), self._tree_header,
+                               show_search_pattern_if_empty=True)
+        search_pattern = self._line_scanner.get_line()
+        header = ""
+        if is_search_pattern_being_edited:
+            header = '\nInsert Search filter: %s <<--' % (search_pattern.strip(),)
+            color = "magenta"
+        elif search_pattern:
+            header = '\nCurrent Search filter: %s' % (search_pattern.strip(),)
+            color = "yellow"
+        if header:
+            printer.print_string(header, color)
 
     def _sorted_children(self, node):
         nid = node.identifier
@@ -209,93 +134,85 @@ class TreePicker(object):
         return self._sorted_children(parent)
 
     def _move_selection_relative(self, distance):
-        if self._selected_node.identifier != self._tree.root:
-            siblings = self._get_siblings()
-            wanted_index = siblings.index(self._selected_node) + distance
-            if wanted_index >= 0 and wanted_index < len(siblings):
-                self._selected_node = siblings[wanted_index]
-                return True
-            elif wanted_index < 0:
-                self._selected_node = siblings[0]
-                return True
-            elif wanted_index >= len(siblings):
-                self._selected_node = siblings[-1]
-                return True
-        return False
+        siblings = self._get_siblings()
+        wanted_index = siblings.index(self._selected_node) + distance
+        if wanted_index >= 0 and wanted_index < len(siblings):
+            self._selected_node = siblings[wanted_index]
+        elif wanted_index < 0:
+            self._selected_node = siblings[0]
+        elif wanted_index >= len(siblings):
+            self._selected_node = siblings[-1]
 
     def _move_selection_absolute(self, index):
         siblings = self._get_siblings()
         self._selected_node = siblings[index]
 
     def _explore(self):
-        if self._tree.children(self._selected_node.identifier):
-            self._selected_node = self._sorted_children(self._selected_node)[0]
-            return True
-        return False
+        children = self._sorted_children(self._selected_node)
+        if children:
+            self._selected_node = children[0]
 
-    def _go_up(self, including_root=False):
+    def _go_up(self):
         if self._selected_node.identifier != self._tree.root:
-            if not including_root and \
-                    self._tree.get_node(self._selected_node.identifier) in \
-                    self._tree.children(self._tree.root):
-                return False
+            if not self._including_root and self._selected_node.bpointer == self._tree.root:
+                return
             self._selected_node = self._tree.get_node(self._selected_node.bpointer)
-            return True
-        return False
 
-    def _scan_search_key(self):
-        key_to_option = {'j': self._OPTION_NEXT,
-                         'k': self._OPTION_PREV,
-                         'l': self._OPTION_EXPLORE,
-                         'h': self._OPTION_UP,
-                         'q': self._OPTION_QUIT,
-                         'G': self._OPTION_MOVE_TO_LAST_SIBLING,
-                         'g': self._OPTION_MOVE_TO_FIRST_SIBLING,
-                         chr(3): self._OPTION_QUIT,
-                         '/': self._OPTION_MOVE_TO_SEARCH_MODE,
-                         chr(16): self._OPTION_MOVE_TO_INTERACTIVE_SEARCH_MODE,
-                         chr(13): self._OPTION_RETURN,
-                         chr(32): self._OPTION_TOGGLE,
-                         chr(4): self._OPTION_PAGE_DOWN,
-                         chr(21): self._OPTION_PAGE_UP,
-                         'u': self._OPTION_PAGE_UP,
-                         'd': self._OPTION_PAGE_DOWN
-                         }
-        key = None
-        while key not in key_to_option:
-            key = getcher.GetchUnix()()
-        return key_to_option[key]
+    def _quit(self):
+        self._mode = self._MODE_QUIT
 
-    def _scan_char_in_interactive_search(self):
-        key = getcher.GetchUnix()()
-        result = self._SERACH_RESULT_SERACH_CONTINUES
-        if key == chr(13):
-            key = None
-            result = self._SEARCH_RESULT_SERACH_ENDED
-        elif key == chr(127):
-            if self._search_pattern:
-                self._search_pattern = self._search_pattern[:-1]
-        elif ord(key) in (8, 21, 23):
-            self._search_pattern = ""
-        elif key == chr(3):
-            self._search_pattern = ""
-            result = self._SEARCH_RESULT_SERACH_ENDED
-        else:
-            self._search_pattern += key
-        return result
+    def _register_key_bindings(self):
+        self._navigation_actions.add_action('next', self._move_selection_relative, distance=1)
+        self._navigation_actions.add_action('previous', self._move_selection_relative, distance=-1)
+        self._navigation_actions.add_action('explore', self._explore)
+        self._navigation_actions.add_action('up', self._go_up)
+        self._navigation_actions.add_action('last_node', self._move_selection_absolute, index=-1)
+        self._navigation_actions.add_action('first_node', self._move_selection_absolute, index=0)
+        self._navigation_actions.add_action('quit', self._quit)
+        self._navigation_actions.add_action('start_search', self._start_search)
+        self._navigation_actions.add_action('start_interactive_search', self._start_interactive_search)
+        self._navigation_actions.add_action('return_picked_nodes', self._return_picked_nodes)
+        self._navigation_actions.add_action('toggle', self._toggle)
+        self._navigation_actions.add_action('page_up', self._move_selection_relative, distance=-4)
+        self._navigation_actions.add_action('page_down', self._move_selection_relative, distance=4)
+        self._navigation_actions.bind('j', 'next')
+        self._navigation_actions.bind('k', 'previous')
+        self._navigation_actions.bind('l', 'explore')
+        self._navigation_actions.bind('h', 'up')
+        self._navigation_actions.bind('q', 'quit')
+        self._navigation_actions.bind('G', 'last_node')
+        self._navigation_actions.bind('g', 'first_node')
+        self._navigation_actions.bind(chr(3), 'quit')  # Ctrl-C
+        self._navigation_actions.bind('/', 'start_search')
+        self._navigation_actions.bind(chr(16), 'start_interactive_search')  # Ctrl-P
+        self._navigation_actions.bind(chr(13), 'return_picked_nodes')  # Return
+        self._navigation_actions.bind(chr(32), 'toggle')  # Space
+        self._navigation_actions.bind(chr(4), 'page_down')  # Ctrl-D
+        self._navigation_actions.bind(chr(21), 'page_up')  # Ctrl-U
+        self._navigation_actions.bind('u', 'page_up')
+        self._navigation_actions.bind('d', 'page_down')
 
     def _toggle(self):
-        if self._selected_node.identifier in self._picked:
-            del self._picked[self._selected_node.identifier]
-            for nid, node in self._tree.subtree(self._selected_node.identifier).nodes.iteritems():
-                if node.identifier in self._picked:
-                    del self._picked[nid]
-        else:
-            self._picked[self._selected_node.identifier] = \
-                    self._tree.get_node(self._selected_node.identifier).data
-            for nid, node in self._tree.subtree(self._selected_node.identifier).nodes.iteritems():
-                if node.identifier not in self._picked:
-                    self._picked[nid] = self._tree.get_node(nid).data
+        if not (self._min_nr_options == self._max_nr_options == 1):
+            if self._selected_node.identifier in self._picked:
+                del self._picked[self._selected_node.identifier]
+                for nid, node in self._tree.subtree(self._selected_node.identifier).nodes.iteritems():
+                    if node.identifier in self._picked:
+                        del self._picked[nid]
+            else:
+                self._picked[self._selected_node.identifier] = \
+                        self._tree.get_node(self._selected_node.identifier).data
+                for nid, node in self._tree.subtree(self._selected_node.identifier).nodes.iteritems():
+                    if node.identifier not in self._picked:
+                        self._picked[nid] = self._tree.get_node(nid).data
+
+    def _calculate_initial_node(self, including_root):
+        node = self._tree.get_node(self._tree.root)
+        if not including_root:
+            children = self._tree.children(self._tree.root)
+            assert children, "Root must have children if including_root==False"
+            node = self._sorted_children(node)[0]
+        return node
 
 
 if __name__ == '__main__':
@@ -317,6 +234,6 @@ if __name__ == '__main__':
     treepicker = TreePicker(thetree)
 
     if os.getenv('MODE') == 'static':
-        printer.wrapper(treepicker.pick, max_nr_lines=25)
+        printer.wrapper(treepicker.pick)
     else:
-        print treepicker.pick(max_nr_lines=25)
+        print treepicker.pick()

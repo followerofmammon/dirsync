@@ -21,7 +21,7 @@ def wrapper(main, *args, **kwargs):
         _printer = _CursesWindowPrinter(window)
         main(*args, **kwargs)
 
-    locale.setlocale(locale.LC_ALL,"")
+    locale.setlocale(locale.LC_ALL, "")
     curses.initscr()
     curses.wrapper(store_window_and_run)
 
@@ -36,6 +36,7 @@ class _Printer(object):
 
 class _CursesWindowPrinter(object):
     _COLOR_NAME_TO_NUMBEER = {'red': 2, 'green': 3, 'blue': 5, "magenta": 6, "yellow": 4}
+
     def __init__(self, window):
         super(_CursesWindowPrinter, self).__init__()
         self._index_of_last_drawn_line = -1
