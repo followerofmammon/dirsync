@@ -12,7 +12,8 @@ class TreeSearch(object):
         self._nodes_that_match_search_filter = dict()
 
     def get_filtered_tree(self, pattern):
-        self._tree = treelib.Tree(self._original_tree, deep=True)
+        if self._previous_pattern is None or not pattern.startswith(self._previous_pattern):
+            self._tree = treelib.Tree(self._original_tree, deep=True)
         if pattern:
             self._scan_nodes_that_match_search_pattern(pattern)
             self._filter_matching_nodes()
