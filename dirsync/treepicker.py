@@ -5,9 +5,9 @@ import keybind
 import printer
 import treesearch
 import linescanner
-import treeprinter
 import treenavigator
 import treepicker_keybindings
+import treepicker_shelloutput
 
 
 class TreePicker(object):
@@ -31,7 +31,7 @@ class TreePicker(object):
         self._navigation_actions = keybind.KeyBind()
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
         self._register_key_bindings()
-        self._tree_printer = treeprinter.TreePrinter(self._tree)
+        self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
 
     def pick_one(self):
         choices = self.pick(min_nr_options=1, max_nr_options=1)
@@ -69,6 +69,11 @@ class TreePicker(object):
                 raise ValueError(self._mode)
         return [node.data for node in picked]
 
+    def _print_tree(self):
+        search_pattern = self._line_scanner.get_line()
+        self._shelloutput.print_tree(self._tree_navigator.get_selected_node(), search_pattern, self._picked,
+                                     self._mode)
+
     def _capture_state(self):
         picked = hash(str(self._picked.keys()))
         return (picked, self._tree_navigator.get_selected_node().identifier, self._mode)
@@ -93,26 +98,7 @@ class TreePicker(object):
         search_pattern = self._line_scanner.get_line()
         self._tree = self._tree_search.get_filtered_tree(search_pattern)
         self._tree_navigator.set_tree(self._tree)
-        self._tree_printer.set_tree(self._tree)
-
-    def _print_tree(self):
-        selected_node = self._tree_navigator.get_selected_node()
-        search_pattern = self._line_scanner.get_line()
-        self._tree_printer.calculate_lines_to_print(selected_node, self._picked, self._max_nr_lines)
-        printer.clear_screen()
-        if self._header is not None:
-            printer.print_string(self._header)
-        self._tree_printer.print_tree()
-        footer = ""
-        is_search_pattern_being_edited = self._mode in (self._MODE_SEARCH, self._MODE_INTERACTIVE_SEARCH)
-        if is_search_pattern_being_edited:
-            footer = '\nInsert Search filter: %s <<--' % (search_pattern.strip(),)
-            color = "magenta"
-        elif search_pattern:
-            footer = '\nCurrent Search filter: %s' % (search_pattern.strip(),)
-            color = "yellow"
-        if footer:
-            printer.print_string(footer, color)
+        self._shelloutput.set_tree(self._tree)
 
     def _quit(self):
         self._mode = self._MODE_QUIT
