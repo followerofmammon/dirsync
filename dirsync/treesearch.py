@@ -1,5 +1,4 @@
 import re
-import getcher
 import treelib
 
 
@@ -7,7 +6,6 @@ class TreeSearch(object):
     def __init__(self, tree):
         self._original_tree = tree
         self._tree = None
-        self._getcher = getcher.GetchUnix()
         self._previous_pattern = None
         self._nodes_that_match_search_filter = dict()
 

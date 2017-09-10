@@ -24,6 +24,8 @@ class LineScanner(object):
         elif key == chr(127):
             if self._line:
                 self._line = self._line[:-1]
+            else:
+                result = self.STATE_EDIT_ENDED
         elif ord(key) in (8, 21, 23):
             self._line = ""
         elif key == chr(3):
