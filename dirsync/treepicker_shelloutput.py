@@ -19,10 +19,10 @@ class TreePickerShellOutput(object):
         is_search_pattern_being_edited = mode in (treepicker.TreePicker._MODE_SEARCH,
                                                   treepicker.TreePicker._MODE_INTERACTIVE_SEARCH)
         if is_search_pattern_being_edited:
-            footer = '\nInsert Search filter: %s <<--' % (search_pattern.strip(),)
+            footer = '\nInsert Search filter: %s|' % (search_pattern,)
             color = "magenta"
         elif search_pattern:
-            footer = '\nCurrent Search filter: %s' % (search_pattern.strip(),)
+            footer = '\nCurrent Search filter: %s' % (search_pattern,)
             color = "yellow"
         if footer:
             printer.print_string(footer, color)
