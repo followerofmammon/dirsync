@@ -43,7 +43,6 @@ class _CursesWindowPrinter(object):
         self._window = window
         self._initialize_colors()
         self._lines = []
-        self._asd = open('asd', 'w')
 
     def _initialize_colors(self):
         curses.start_color()
@@ -81,8 +80,6 @@ class _CursesWindowPrinter(object):
         else:
             color = curses.color_pair(self._COLOR_NAME_TO_NUMBEER[color])
         self._window.addstr(line_index, 0, line, color)
-        self._asd.write(line + str(line_index) + "\n")
-        self._asd.flush()
 
     def print_string(self, string, color=None):
         for line in string.splitlines():
