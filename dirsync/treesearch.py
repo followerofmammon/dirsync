@@ -11,6 +11,7 @@ class TreeSearch(object):
         self._result_cache = collections.OrderedDict()
 
     def get_filtered_tree(self, pattern):
+        pattern = pattern.lower()
         if pattern in self._result_cache:
             tree = self._result_cache.pop(pattern)
         elif pattern:
@@ -31,7 +32,7 @@ class TreeSearch(object):
         matching_nodes = {self._tree.root: True}
         for nid, node in self._tree.nodes.iteritems():
             node_data = node.tag if node.data is None else str(node.data)
-            if pattern in node_data:
+            if pattern in node_data.lower():
                 for ancestor_nid in self._tree.rsearch(nid):
                     if ancestor_nid not in matching_nodes:
                         matching_nodes[ancestor_nid] = True
