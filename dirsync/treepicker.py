@@ -17,10 +17,11 @@ class TreePicker(object):
     _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
 
-    def __init__(self, tree, including_root=True, header=None, max_nr_lines=25):
+    def __init__(self, tree, including_root=True, header=None, max_nr_lines=25,
+                 min_nr_options=1, max_nr_options=None):
         self._tree = tree
-        self._min_nr_options = 0
-        self._max_nr_options = len(self._tree)
+        self._min_nr_options = min_nr_options
+        self._max_nr_options = len(self._tree) if max_nr_options is None else max_nr_options
         self._max_nr_lines = max_nr_lines
         self._picked = dict()
         self._mode = self._MODE_NAVIGATION
@@ -34,12 +35,10 @@ class TreePicker(object):
         self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
 
     def pick_one(self):
-        choices = self.pick(min_nr_options=1, max_nr_options=1)
+        choices = self.pick()
         return None if not choices else choices[0]
 
-    def pick(self, min_nr_options=None, max_nr_options=None):
-        self._min_nr_options = self._min_nr_options if min_nr_options is None else min_nr_options
-        self._max_nr_options = self._max_nr_options if max_nr_options is None else max_nr_options
+    def pick(self):
         print_tree_once = True
         picked = None
         while picked is None:
