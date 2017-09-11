@@ -18,8 +18,7 @@ class TreePicker(object):
     _MODE_QUIT = 'quit'
 
     def __init__(self, tree, including_root=True, header=None, max_nr_lines=25):
-        self._original_tree = tree
-        self._tree = treelib.Tree(self._original_tree, deep=True)
+        self._tree = tree
         self._min_nr_options = 0
         self._max_nr_options = len(self._tree)
         self._max_nr_lines = max_nr_lines
