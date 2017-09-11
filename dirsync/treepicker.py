@@ -30,7 +30,8 @@ class TreePicker(object):
         self._line_scanner = linescanner.LineScanner()
         self._navigation_actions = keybind.KeyBind()
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
-        self._register_key_bindings()
+        treepicker_keybindings.populate_bindings(self._navigation_actions)
+        treepicker_keybindings.register_actions(self._navigation_actions, self, self._tree_navigator)
         self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
 
     def pick_one(self):
@@ -69,57 +70,18 @@ class TreePicker(object):
                 raise ValueError(self._mode)
         return [node.data for node in picked]
 
-    def _print_tree(self):
-        search_pattern = self._line_scanner.get_line()
-        self._shelloutput.print_tree(self._tree_navigator.get_selected_node(), search_pattern, self._picked,
-                                     self._mode)
-
-    def _capture_state(self):
-        picked = hash(str(self._picked.keys()))
-        return (picked, self._tree_navigator.get_selected_node().identifier, self._mode)
-
-    def _start_search(self):
+    def start_search(self):
         self._mode = self._MODE_SEARCH
         self._line_scanner.clear_line()
 
-    def _start_interactive_search(self):
+    def start_interactive_search(self):
         self._mode = self._MODE_INTERACTIVE_SEARCH
         self._line_scanner.clear_line()
 
-    def _return_picked_nodes(self):
-        if self._min_nr_options == self._max_nr_options == 1:
-            selected_node = self._tree_navigator.get_selected_node()
-            self._picked = {selected_node.identifier: selected_node}
-            self._mode = self._MODE_RETURN
-        elif self._min_nr_options <= len(self._picked) <= self._max_nr_options:
-            self._mode = self._MODE_RETURN
-
-    def _filter_tree_entries_by_search_pattern(self):
-        search_pattern = self._line_scanner.get_line()
-        self._tree = self._tree_search.get_filtered_tree(search_pattern)
-        self._tree_navigator.set_tree(self._tree)
-        self._shelloutput.set_tree(self._tree)
-
-    def _quit(self):
+    def quit(self):
         self._mode = self._MODE_QUIT
 
-    def _register_key_bindings(self):
-        self._navigation_actions.add_action('next', self._tree_navigator.next)
-        self._navigation_actions.add_action('previous', self._tree_navigator.previous)
-        self._navigation_actions.add_action('explore', self._tree_navigator.explore)
-        self._navigation_actions.add_action('up', self._tree_navigator.go_up)
-        self._navigation_actions.add_action('last_node', self._tree_navigator.last_node)
-        self._navigation_actions.add_action('first_node', self._tree_navigator.first_node)
-        self._navigation_actions.add_action('quit', self._quit)
-        self._navigation_actions.add_action('start_search', self._start_search)
-        self._navigation_actions.add_action('start_interactive_search', self._start_interactive_search)
-        self._navigation_actions.add_action('return_picked_nodes', self._return_picked_nodes)
-        self._navigation_actions.add_action('toggle', self._toggle)
-        self._navigation_actions.add_action('page_up', self._tree_navigator.page_up)
-        self._navigation_actions.add_action('page_down', self._tree_navigator.page_down)
-        treepicker_keybindings.populate_bindings(self._navigation_actions)
-
-    def _toggle(self):
+    def toggle(self):
         selected_node = self._tree_navigator.get_selected_node()
         # No toggle with only one option
         if self._min_nr_options == self._max_nr_options == 1:
@@ -131,6 +93,28 @@ class TreePicker(object):
         toggle_node(selected_node)
         for node in self._tree.subtree(selected_node.identifier).nodes.itervalues():
             toggle_node(node)
+
+    def return_picked_nodes(self):
+        if self._min_nr_options == self._max_nr_options == 1:
+            selected_node = self._tree_navigator.get_selected_node()
+            self._picked = {selected_node.identifier: selected_node}
+            self._mode = self._MODE_RETURN
+        elif self._min_nr_options <= len(self._picked) <= self._max_nr_options:
+            self._mode = self._MODE_RETURN
+
+    def _print_tree(self):
+        search_pattern = self._line_scanner.get_line()
+        self._shelloutput.print_tree(self._tree_navigator.get_selected_node(), search_pattern, self._picked,
+                                     self._mode)
+    def _capture_state(self):
+        picked = hash(str(self._picked.keys()))
+        return (picked, self._tree_navigator.get_selected_node().identifier, self._mode)
+
+    def _filter_tree_entries_by_search_pattern(self):
+        search_pattern = self._line_scanner.get_line()
+        self._tree = self._tree_search.get_filtered_tree(search_pattern)
+        self._tree_navigator.set_tree(self._tree)
+        self._shelloutput.set_tree(self._tree)
 
     def _select_node(self, node):
         self._picked[node.identifier] = node
