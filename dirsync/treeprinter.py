@@ -26,7 +26,7 @@ class TreePrinter(object):
         self._tree_lines = list(self._get_tree_lines(max_nr_lines))
 
     def print_tree(self):
-        for index, (line, color) in enumerate(self._tree_lines):
+        for line, color in self._tree_lines:
             printer.print_string(line, color)
         self._print_info_lines()
 
@@ -122,25 +122,9 @@ class TreePrinter(object):
 
 
 if __name__ == '__main__':
-    tree = treelib.Tree()
-    root_ = tree.create_node(identifier='rootnodeid', tag='rootnodetag', data='rootnodeval')
-    a = tree.create_node('childnode1', 'childnode1', parent='rootnodeid', data='child1data')
-    tree.create_node('grandson3', 'grandson3', parent='childnode1', data='grandson3data')
-    tree.create_node('grandson4', 'grandson4', parent='childnode1', data='grandson4data')
-    tree.create_node('grandson7', 'grandson7', parent='childnode1', data='grandson7data')
-    tree.create_node('grandson8', 'grandson8', parent='childnode1', data='grandson8data')
-
-    tree.create_node('grandgrandson1', 'grandgrandson1', parent='grandson7', data='grandgrand1data')
-    tree.create_node('grandgrandson6', 'grandgrandson6', parent='grandson7', data='grandgrand6data')
-    tree.create_node('grandgrandson9', 'grandgrandson8', parent='grandson7', data='grandgrand9data')
-
-    tree.create_node('grandgrandson11', 'grandgrandson11', parent='grandson8', data='grandgrand11')
-    tree.create_node('grandgrandson77', 'grandgrandson77', parent='grandson8', data='grandgrand77')
-    tree.create_node('grandgrandson99', 'grandgrandson88', parent='grandson8', data='grandgrand99')
-
-    b = tree.create_node('childnode2', 'childnode2', parent='rootnodeid', data='child2data')
-    b = tree.create_node('childnode5', 'childnode5', parent='rootnodeid', data='child5data')
-    print_tree(tree,
-               selected_node=tree.nodes['grandson7'],
-               picked_nodes=[tree.nodes['grandgrandson11'], tree.nodes['grandgrandson1']],
-               max_nr_lines=20)
+    from exampletree import tree
+    treeprinter = TreePrinter(tree)
+    treeprinter.calculate_lines_to_print(selected_node=tree.nodes['grandson7'],
+                                         picked_nodes=['childnode4', 'grandson5'],
+                                         max_nr_lines=20)
+    treeprinter.print_tree()
