@@ -84,10 +84,8 @@ class TreePicker(object):
         # No toggle with only one option
         if self._min_nr_options == self._max_nr_options == 1:
             return
-        if selected_node.identifier in self._picked:
-            toggle_node = self._unselect_node
-        else:
-            toggle_node = self._select_node
+        is_picked = selected_node.identifier in self._picked
+        toggle_node = self._unpick_node if is_picked else self._pick_node
         toggle_node(selected_node)
         for node in self._tree.subtree(selected_node.identifier).nodes.itervalues():
             toggle_node(node)
@@ -114,10 +112,10 @@ class TreePicker(object):
         self._tree_navigator.set_tree(self._tree)
         self._shelloutput.set_tree(self._tree)
 
-    def _select_node(self, node):
+    def _pick_node(self, node):
         self._picked[node.identifier] = node
 
-    def _unselect_node(self, node):
+    def _unpick_node(self, node):
         if node.identifier in self._picked:
             del self._picked[node.identifier]
 
