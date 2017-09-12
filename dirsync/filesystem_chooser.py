@@ -9,7 +9,7 @@ import treepicker
 class FilesystemPicker(object):
     def __init__(self, rootpath):
         self._filesystem_tree = dirtree.DirTree.factory_from_filesystem(rootpath)
-        self._tree_picker = treepicker.TreePicker(self._filesystem_tree)
+        self._tree_picker = treepicker.TreePicker(self._filesystem_tree, min_nr_options=1, max_nr_options=1)
 
     def pick_one(self):
         return self._tree_picker.pick_one()
