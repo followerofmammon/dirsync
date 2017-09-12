@@ -32,10 +32,10 @@ def main():
     args = parse_args()
     picker = FilesystemPicker(args.dir)
     if os.getenv('MODE') == 'static':
+        file_entry = picker.pick_one()
+    else:
         printer.wrapper(pick_wrapper, picker)
         file_entry = picked_file
-    else:
-        file_entry = picker.pick_one()
     if args.execute is not None:
         command = [os.path.basename(args.execute), file_entry.full_filesystem_path()]
         os.execve(args.execute, command, {})
