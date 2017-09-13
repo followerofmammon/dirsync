@@ -23,6 +23,8 @@ def parse_args():
 
 
 picked_file = None
+
+
 def pick_wrapper(picker):
     global picked_file
     picked_file = picker.pick_one()
