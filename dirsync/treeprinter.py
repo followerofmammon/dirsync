@@ -43,7 +43,7 @@ class TreePrinter(object):
         tree = self._prepare_tree_for_printing()
         self._add_id_to_end_of_tags_in_all_nodes(tree)
         lines = treelib_printwrapper.get_tree_output(tree, key=self._node_key).splitlines()
-        for line_index, line in enumerate(lines):
+        for line in lines:
             tag, nid = self._decode_encoded_tree_line(line)
             encoded_tag_index = line.index(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)
             line = line[:encoded_tag_index] + tag
