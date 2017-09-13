@@ -6,11 +6,10 @@ import treeprinter
 class TreePickerShellOutput(object):
     def __init__(self, tree, header, max_nr_lines):
         self._header = header
-        self._tree_printer = treeprinter.TreePrinter(tree)
-        self._max_nr_lines = max_nr_lines
+        self._tree_printer = treeprinter.TreePrinter(tree, max_nr_lines)
 
     def print_tree(self, selected_node, search_pattern, picked_nodes, mode):
-        self._tree_printer.calculate_lines_to_print(selected_node, picked_nodes, self._max_nr_lines)
+        self._tree_printer.calculate_lines_to_print(selected_node, picked_nodes)
         printer.clear_screen()
         if self._header is not None:
             printer.print_string(self._header)

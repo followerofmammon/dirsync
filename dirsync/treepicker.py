@@ -1,5 +1,4 @@
 import os
-import treelib
 
 import keybind
 import printer
@@ -17,12 +16,11 @@ class TreePicker(object):
     _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
 
-    def __init__(self, tree, including_root=True, header=None, max_nr_lines=25,
+    def __init__(self, tree, including_root=True, header=None, max_nr_lines=None,
                  min_nr_options=1, max_nr_options=None):
         self._tree = tree
         self._min_nr_options = min_nr_options
         self._max_nr_options = len(self._tree) if max_nr_options is None else max_nr_options
-        self._max_nr_lines = max_nr_lines
         self._picked = dict()
         self._mode = self._MODE_NAVIGATION
         self._header = header
@@ -32,7 +30,8 @@ class TreePicker(object):
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
         treepicker_keybindings.populate_bindings(self._navigation_actions)
         treepicker_keybindings.register_actions(self._navigation_actions, self, self._tree_navigator)
-        self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
+        self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header,
+                                                                         max_nr_lines)
 
     def pick_one(self):
         choices = self.pick()
@@ -102,6 +101,7 @@ class TreePicker(object):
         search_pattern = self._line_scanner.get_line()
         self._shelloutput.print_tree(self._tree_navigator.get_selected_node(), search_pattern, self._picked,
                                      self._mode)
+
     def _capture_state(self):
         picked = hash(str(self._picked.keys()))
         return (picked, self._tree_navigator.get_selected_node().identifier, self._mode)
