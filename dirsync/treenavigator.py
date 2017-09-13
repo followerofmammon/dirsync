@@ -35,7 +35,7 @@ class TreeNavigator(object):
         self._move_selection_relative(distance=4)
 
     def page_up(self):
-        self._move_selection_relative(istance=-4)
+        self._move_selection_relative(distance=-4)
 
     def set_tree(self, tree):
         self._tree = tree
