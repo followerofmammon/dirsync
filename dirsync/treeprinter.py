@@ -2,6 +2,7 @@ import treelib
 import binascii
 
 import printer
+import treeops
 import pagination
 import treelib_printwrapper
 
@@ -67,26 +68,6 @@ class TreePrinter(object):
         header = "Current: %s, %d items selected" % (label, len(self._picked_nodes))
         printer.print_string(header)
 
-    def _get_max_possible_depth(self, tree):
-        node_counter = 0
-        bfs_queue = [(tree.get_node(tree.root), 0)]
-        self._nodes_by_depth_cache = dict()
-        max_depth = -1
-        depth = 0
-        selected_node_depth = tree.depth(self._selected_node.identifier)
-        while bfs_queue:
-            node, depth = bfs_queue.pop(0)
-            if depth - 1 > max_depth and node_counter <= self._max_nr_lines:
-                max_depth = depth - 1
-            node_counter += 1
-            if depth < selected_node_depth or node_counter < self._max_nr_lines:
-                for child in tree.children(node.identifier):
-                    bfs_queue.append((child, depth + 1))
-            self._nodes_by_depth_cache.setdefault(depth, list()).append(node)
-        if node_counter <= self._max_nr_lines and depth > max_depth:
-            max_depth = depth
-        return max(max_depth, selected_node_depth)
-
     def _prepare_tree_for_printing(self):
         # Find root node from which to print tree
         if self._selected_node.identifier == self._tree.root:
@@ -94,17 +75,16 @@ class TreePrinter(object):
         else:
             parent_nid = self._selected_node.bpointer
             tree = self._tree.subtree(parent_nid)
-        root_nid = tree.root
 
-        # Decrease the level of printing until reaching limit of #lines
-        max_depth = self._get_max_possible_depth(tree)
+        max_depth, nodes_by_depth = treeops.get_max_possible_depth(tree, self._max_nr_lines,
+                                                                   min_depth=tree.depth(self._selected_node))
 
         # Paginate siblings of selected node
         _tree = treelib.Tree()
-        root = tree.get_node(root_nid)
+        root = tree.get_node(tree.root)
         _tree.create_node(identifier=root.identifier, tag=root.tag, data=root.data)
         for depth in xrange(1, max_depth + 1):
-            nodes = self._nodes_by_depth_cache[depth]
+            nodes = nodes_by_depth[depth]
             nonsiblings = [node for node in nodes if node.bpointer != self._selected_node.bpointer]
             for node in nonsiblings:
                 _tree.create_node(identifier=node.identifier, tag=node.tag, data=node.data,
