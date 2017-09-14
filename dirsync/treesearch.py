@@ -34,7 +34,9 @@ class TreeSearch(object):
             node_data = node.tag if node.data is None else str(node.data)
             if pattern in node_data.lower():
                 for ancestor_nid in self._tree.rsearch(nid):
-                    if ancestor_nid not in matching_nodes:
+                    if ancestor_nid in matching_nodes:
+                        break
+                    else:
                         matching_nodes[ancestor_nid] = True
                         yield ancestor_nid
 
@@ -63,4 +65,8 @@ if __name__ == "__main__":
     _dir = dirtree.DirTree.factory_from_filesystem('/home/eliran/Music')
     search = TreeSearch(_dir)
     import cProfile
-    cProfile.run("search.get_filtered_tree('B')")
+    profile = cProfile.Profile()
+    profile.enable()
+    search.get_filtered_tree('B')
+    profile.disable()
+    profile.dump_stats('profile.bin')
