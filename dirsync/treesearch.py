@@ -29,16 +29,10 @@ class TreeSearch(object):
         self._result_cache[pattern] = tree
 
     def _scan_nodes_that_match_search_pattern(self, pattern):
-        matching_nodes = {self._tree.root: True}
         for nid, node in self._tree.nodes.iteritems():
             node_data = node.tag if node.data is None else str(node.data)
             if pattern in node_data.lower():
-                for ancestor_nid in self._tree.rsearch(nid):
-                    if ancestor_nid in matching_nodes:
-                        break
-                    else:
-                        matching_nodes[ancestor_nid] = True
-                        yield ancestor_nid
+                yield nid
 
     def _filter_matching_nodes(self, matching_nodes):
         tree = treelib.Tree()
