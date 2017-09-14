@@ -122,7 +122,7 @@ class TreePicker(object):
 
 if __name__ == '__main__':
     from exampletree import tree
-    treepicker = TreePicker(tree, header='stuff:')
+    treepicker = TreePicker(tree, header='stuff:', max_nr_lines=25)
     if os.getenv('MODE') == 'static':
         printer.wrapper(treepicker.pick)
     else:
