@@ -5,8 +5,8 @@ import printer
 import treesearch
 import linescanner
 import treenavigator
-import treepicker_keybindings
-import treepicker_shelloutput
+import treepicker_keybindings as keybindings
+import treepicker_shelloutput as shelloutput
 
 
 class TreePicker(object):
@@ -28,10 +28,9 @@ class TreePicker(object):
         self._line_scanner = linescanner.LineScanner()
         self._navigation_actions = keybind.KeyBind()
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
-        treepicker_keybindings.populate_bindings(self._navigation_actions)
-        treepicker_keybindings.register_actions(self._navigation_actions, self, self._tree_navigator)
-        self._shelloutput = treepicker_shelloutput.TreePickerShellOutput(self._tree, self._header,
-                                                                         max_nr_lines)
+        keybindings.populate_bindings(self._navigation_actions)
+        keybindings.register_actions(self._navigation_actions, self, self._tree_navigator)
+        self._shelloutput = shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
 
     def pick_one(self):
         choices = self.pick()
