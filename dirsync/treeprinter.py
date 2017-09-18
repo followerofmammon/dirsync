@@ -40,27 +40,53 @@ class TreePrinter(object):
             printer.print_string(line, color)
         self._print_info_lines()
 
-    def _get_tree_lines(self):
+    def _get_tree_lines(self, max_allowed_depth=20):
         tree = self._prepare_tree_for_printing()
-        self._add_id_to_end_of_tags_in_all_nodes(tree)
-        lines = treelib_printwrapper.get_tree_output(tree, key=self._node_key).splitlines()
-        for line in lines:
-            tag, nid = self._decode_encoded_tree_line(line)
-            encoded_tag_index = line.index(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)
-            line = line[:encoded_tag_index] + tag
-            if not nid.startswith("__UNLIKELY_IDENTIFIER__"):
-                if not tree.children(nid) and self._tree.children(nid):
-                    line += " (...)"
-            prefix = ">" if nid == self._selected_node.identifier else " "
-            prefix += " "
-            prefix += "X" if nid in self._picked_nodes else " "
-            line = "%s %s" % (prefix, line)
-            if nid == self._selected_node.identifier:
-                color = "blue" if nid in self._picked_nodes else "green"
-            elif nid in self._picked_nodes:
+        depth = 0
+        max_depth = depth
+        is_last_child = True
+        bfs_stack = [(tree.get_node(tree.root), depth, is_last_child)]
+        lines = []
+        while bfs_stack:
+            node, depth, is_last_child = bfs_stack.pop()
+            max_depth = max(depth, max_depth)
+            lines.append((node, depth, is_last_child))
+            if depth < max_allowed_depth:
+                children = tree.children(node.identifier)
+                if children:
+                    children.sort(self._compare_nodes)
+                    bfs_stack.append((children[0], depth + 1, True))
+                    bfs_stack.extend([(child, depth + 1, False) for child in children[1:]])
+        does_parent_in_height_n_has_more_nodes = [False] * (max_depth + 1)
+        for node, depth, is_last_child in lines:
+            if node.identifier == self._selected_node.identifier:
+                color = "blue" if node.identifier in self._picked_nodes else "green"
+            elif node.identifier in self._picked_nodes:
                 color = "red"
             else:
                 color = None
+            prefix = ">" if node.identifier == self._selected_node.identifier else " "
+            prefix += " "
+            prefix += "X" if node.identifier in self._picked_nodes else " "
+            does_parent_in_height_n_has_more_nodes[depth] = not is_last_child
+            line = ""
+            if node.identifier != tree.root:
+                for lower_depth in xrange(1, depth):
+                    if does_parent_in_height_n_has_more_nodes[lower_depth]:
+                        prefix += "\xe2\x94\x82   "
+                    else:
+                        prefix += "    "
+                if is_last_child:
+                    prefix += '\xe2\x94\x94'
+                else:
+                    prefix += '\xe2\x94\x9c'
+                prefix += '\xe2\x94\x80' * 2
+                prefix += " "
+            line += prefix
+            line += node.tag
+            if not node.identifier.startswith("__UNLIKELY_IDENTIFIER__"):
+                if not tree.children(node.identifier) and self._tree.children(node.identifier):
+                    line += " (...)"
             yield line, color
 
     def _print_info_lines(self):
@@ -118,20 +144,7 @@ class TreePrinter(object):
 
     @classmethod
     def _compare_nodes(cls, node_a, node_b):
-        return 1 if cls._node_key(node_a) > cls._node_key(node_b) else -1
-
-    @staticmethod
-    def _add_id_to_end_of_tags_in_all_nodes(tree):
-        for node in tree.nodes.values():
-            node.tag = (_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + binascii.hexlify(node.tag) +
-                        _UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME + binascii.hexlify(node.identifier))
-
-    @staticmethod
-    def _decode_encoded_tree_line(tag):
-        parts = tag.split(_UNIQUE_SEPERATOR_UNLIKELY_IN_FILENAME)
-        encoded_tag = binascii.unhexlify(parts[1])
-        encoded_nid = binascii.unhexlify(parts[2])
-        return encoded_tag, encoded_nid
+        return 1 if cls._node_key(node_a) < cls._node_key(node_b) else -1
 
 
 if __name__ == '__main__':
