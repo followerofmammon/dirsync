@@ -14,7 +14,7 @@ class TreePrinter(object):
     _DATA_THAT_WILL_APPEAR_LAST = chr(127)
 
     def __init__(self, tree, max_nr_lines=None):
-        self.set_tree(tree)
+        self._tree = tree
         self._tree_lines = None
         self._selected_node = None
         self._picked_nodes = None
@@ -24,12 +24,11 @@ class TreePrinter(object):
         self._nodes_by_depth_cache = None
         self._root = None
         self._max_allowed_depth = None
+        self._search_pattern = ""
 
-    def set_tree(self, tree):
-        self._tree = tree
-
-    def calculate_lines_to_print(self, selected_node_id, picked_nodes):
+    def calculate_lines_to_print(self, selected_node_id, picked_nodes, search_pattern):
         self._selected_node = self._tree.get_node(selected_node_id)
+        self._search_pattern = search_pattern
         self._picked_nodes = picked_nodes
         self._prepare_tree_for_printing()
         self._tree_lines = list(self._get_tree_lines())
@@ -78,6 +77,11 @@ class TreePrinter(object):
             prefix = ">" if node.identifier == self._selected_node.identifier else " "
             prefix += " "
             prefix += "X" if node.identifier in self._picked_nodes else " "
+            if hasattr(node, 'original_matching') and node.original_matching and self._search_pattern:
+                color = "yellow"
+                prefix += "~"
+            else:
+                prefix += " "
             does_parent_in_height_n_has_more_nodes[depth] = not is_last_child
             if node.identifier != self._root:
                 for lower_depth in xrange(1, depth):

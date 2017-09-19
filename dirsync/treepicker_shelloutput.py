@@ -9,7 +9,7 @@ class TreePickerShellOutput(object):
         self._tree_printer = treeprinter.TreePrinter(tree, max_nr_lines)
 
     def print_tree(self, selected_node, search_pattern, picked_nodes, mode):
-        self._tree_printer.calculate_lines_to_print(selected_node, picked_nodes)
+        self._tree_printer.calculate_lines_to_print(selected_node, picked_nodes, search_pattern)
         printer.clear_screen()
         if self._header is not None:
             printer.print_string(self._header)
@@ -25,6 +25,3 @@ class TreePickerShellOutput(object):
             color = "yellow"
         if footer:
             printer.print_string(footer, color)
-
-    def set_tree(self, tree):
-        self._tree_printer.set_tree(tree)
