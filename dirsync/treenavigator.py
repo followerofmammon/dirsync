@@ -6,7 +6,7 @@ class TreeNavigator(object):
         self._selected_node = self._calculate_initial_node()
 
     def get_selected_node(self):
-        return self._selected_node
+        return self._selected_node.identifier
 
     def next(self):
         self._move_selection_relative(distance=1)

@@ -7,9 +7,10 @@ def populate_bindings(keybind):
     keybind.bind('G', 'last_node')
     keybind.bind('g', 'first_node')
     keybind.bind(chr(3), 'quit')  # Ctrl-C
-    keybind.bind('/', 'start_search')
+    keybind.bind('/', 'start_interactive_search')
     keybind.bind(chr(16), 'start_interactive_search')  # Ctrl-P
     keybind.bind(chr(13), 'return_picked_nodes')  # Return
+    keybind.bind(chr(31), 'start_search')  # Ctrl-/
     keybind.bind(chr(32), 'toggle')  # Space
     keybind.bind(chr(4), 'page_down')  # Ctrl-D
     keybind.bind(chr(21), 'page_up')  # Ctrl-U
