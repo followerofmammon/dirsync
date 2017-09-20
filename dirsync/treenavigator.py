@@ -3,7 +3,8 @@ class TreeNavigator(object):
         self._tree = tree
         self._including_root = including_root
         self._sorted_children_by_nid_cache = dict()
-        self._selected_node = self._calculate_initial_node()
+        self._selected_node = None
+        self._calculate_initial_selected_node()
 
     def get_selected_node(self):
         return self._selected_node.identifier
@@ -55,6 +56,9 @@ class TreeNavigator(object):
     _DIRECTION_NEXT = 1
     _DIRECTION_PREV = 2
 
+    def go_to_root(self):
+        self._selected_node = self._tree.get_node(self._tree.root)
+
     def _move_selection_relative_leaf(self, direction):
         # Find next parent
         next_parent = None
@@ -80,7 +84,7 @@ class TreeNavigator(object):
     def set_tree(self, tree):
         self._tree = tree
         self._sorted_children_by_nid_cache = dict()
-        self._selected_node = self._calculate_initial_node()
+        self._calculate_initial_selected_node()
 
     def _move_selection_relative(self, distance):
         siblings = self._get_siblings()
@@ -92,13 +96,15 @@ class TreeNavigator(object):
         elif wanted_index >= len(siblings):
             self._selected_node = siblings[-1]
 
-    def _calculate_initial_node(self):
-        node = self._tree.get_node(self._tree.root)
-        if not self._including_root:
-            children = self._tree.children(self._tree.root)
-            assert children, "Root must have children if including_root==False"
-            node = self._sorted_children(node)[0]
-        return node
+    def _calculate_initial_selected_node(self):
+        node = self._selected_node
+        if node is None or node.identifier not in self._tree.nodes:
+            node = self._tree.get_node(self._tree.root)
+            if not self._including_root:
+                children = self._tree.children(self._tree.root)
+                assert children, "Root must have children if including_root==False"
+                node = self._sorted_children(node)[0]
+        self._selected_node = node
 
     def _move_selection_absolute(self, index):
         siblings = self._get_siblings()

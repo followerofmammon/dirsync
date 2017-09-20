@@ -18,6 +18,7 @@ def populate_bindings(keybind):
     keybind.bind('d', 'page_down')
     keybind.bind(chr(10), 'next_leaf')  # Ctrl-j
     keybind.bind(chr(11), 'prev_leaf')  # Ctrl-k
+    keybind.bind(chr(8), 'go_to_root')  # Ctrl-h
 
 
 def register_actions(keybind, treepicker, tree_navigator):
@@ -36,3 +37,4 @@ def register_actions(keybind, treepicker, tree_navigator):
     keybind.add_action('page_down', tree_navigator.page_down)
     keybind.add_action('next_leaf', tree_navigator.next_leaf)
     keybind.add_action('prev_leaf', tree_navigator.prev_leaf)
+    keybind.add_action('go_to_root', tree_navigator.go_to_root)
