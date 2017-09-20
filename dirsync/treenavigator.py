@@ -59,6 +59,13 @@ class TreeNavigator(object):
     def go_to_root(self):
         self._selected_node = self._tree.get_node(self._tree.root)
 
+    def explore_deepest_child(self):
+        while True:
+            previously_selected_node = self._selected_node
+            self.explore()
+            if previously_selected_node == self._selected_node:
+                break
+
     def _move_selection_relative_leaf(self, direction):
         # Find next parent
         next_parent = None
@@ -75,11 +82,7 @@ class TreeNavigator(object):
                     return
             else:
                 next_parent = self._selected_node
-        while True:
-            previously_selected_node = self._selected_node
-            self.explore()
-            if previously_selected_node == self._selected_node:
-                break
+        self.explore_deepest_child()
 
     def set_tree(self, tree):
         self._tree = tree
