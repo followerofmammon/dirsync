@@ -57,8 +57,8 @@ class TreePicker(object):
                 result = self._line_scanner.scan_char()
                 if result == linescanner.LineScanner.STATE_EDIT_ENDED:
                     self._mode = self._MODE_NAVIGATION
-                    self._set_tree_for_navigation()
                     self._mark_matching_tree_nodes()
+                    self._set_tree_for_navigation()
             elif self._mode == self._MODE_INTERACTIVE_SEARCH:
                 result = self._line_scanner.scan_char()
                 self._mark_matching_tree_nodes()
@@ -95,9 +95,6 @@ class TreePicker(object):
 
         # Reset tree search results
         self._line_scanner.clear_line()
-        self._mark_matching_tree_nodes()
-
-        self._set_tree_for_navigation()
 
     def start_interactive_search(self):
         self._mode = self._MODE_INTERACTIVE_SEARCH
