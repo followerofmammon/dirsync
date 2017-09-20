@@ -35,7 +35,6 @@ class TreeSearch(object):
                         break
                     ancestor.matching = True
 
-
             children = self._tree.children(node.identifier)
             if narrowing_previous_pattern_result:
                 children = [child for child in children if child.matching]
