@@ -8,6 +8,15 @@ class TreeNavigator(object):
     def get_selected_node(self):
         return self._selected_node.identifier
 
+    def select_first_match(self):
+        if not self._selected_node.original_matching:
+            self._selected_node = self._tree.get_node(self._tree.root)
+        while not self._selected_node.original_matching:
+            previous = self._selected_node
+            self.explore()
+            if previous == self._selected_node:
+                break
+
     def next(self):
         self._move_selection_relative(distance=1)
 

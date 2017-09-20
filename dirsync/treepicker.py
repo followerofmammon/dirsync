@@ -65,6 +65,7 @@ class TreePicker(object):
                 if result == linescanner.LineScanner.STATE_EDIT_ENDED:
                     self._mode = self._MODE_NAVIGATION
                     self._set_tree_for_navigation()
+                    self._tree_navigator.select_first_match()
             elif self._mode == self._MODE_RETURN:
                 picked = self._picked.values()
             elif self._mode == self._MODE_QUIT:
@@ -85,6 +86,7 @@ class TreePicker(object):
                 new_node = tree.create_node(identifier=node.identifier, tag=node.tag, data=node.data,
                                             parent=node.bpointer)
                 new_node.matching = node.matching
+                new_node.original_matching = node.original_matching
             bfs_queue.extend(self._tree.children(node.identifier))
         self._tree_navigator.set_tree(tree)
 
