@@ -65,7 +65,6 @@ class TreePicker(object):
                 if result == linescanner.LineScanner.STATE_EDIT_ENDED:
                     self._mode = self._MODE_NAVIGATION
                     self._set_tree_for_navigation()
-                    self._tree_navigator.select_first_match()
             elif self._mode == self._MODE_RETURN:
                 picked = self._picked.values()
             elif self._mode == self._MODE_QUIT:
