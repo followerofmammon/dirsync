@@ -37,6 +37,37 @@ class TreeNavigator(object):
     def page_up(self):
         self._move_selection_relative(distance=-4)
 
+    def next_leaf(self):
+        self._move_selection_relative_leaf(self._DIRECTION_NEXT)
+
+    def prev_leaf(self):
+        self._move_selection_relative_leaf(self._DIRECTION_PREV)
+
+    _DIRECTION_NEXT = 1
+    _DIRECTION_PREV = 2
+
+    def _move_selection_relative_leaf(self, direction):
+        # Find next parent
+        next_parent = None
+        original_selection = self._selected_node
+        while next_parent is None:
+            previously_selected_node = self._selected_node
+            distance = 1 if direction == self._DIRECTION_NEXT else -1
+            self._move_selection_relative(distance)
+            is_last_child_of_parent = self._selected_node == previously_selected_node
+            if is_last_child_of_parent and self._selected_node.identifier != self._tree.root:
+                self.go_up()
+                if self._selected_node.identifier == self._tree.root:
+                    self._selected_node = original_selection
+                    return
+            else:
+                next_parent = self._selected_node
+        while True:
+            previously_selected_node = self._selected_node
+            self.explore()
+            if previously_selected_node == self._selected_node:
+                break
+
     def set_tree(self, tree):
         self._tree = tree
         self._sorted_children_by_nid_cache = dict()

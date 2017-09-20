@@ -6,16 +6,18 @@ def populate_bindings(keybind):
     keybind.bind('q', 'quit')
     keybind.bind('G', 'last_node')
     keybind.bind('g', 'first_node')
-    keybind.bind(chr(3), 'quit')  # Ctrl-C
+    keybind.bind(chr(3), 'quit')  # Ctrl-c
     keybind.bind('/', 'start_interactive_search')
-    keybind.bind(chr(16), 'start_interactive_search')  # Ctrl-P
+    keybind.bind(chr(16), 'start_interactive_search')  # Ctrl-p
     keybind.bind(chr(13), 'return_picked_nodes')  # Return
     keybind.bind(chr(31), 'start_search')  # Ctrl-/
     keybind.bind(chr(32), 'toggle')  # Space
-    keybind.bind(chr(4), 'page_down')  # Ctrl-D
-    keybind.bind(chr(21), 'page_up')  # Ctrl-U
+    keybind.bind(chr(4), 'page_down')  # Ctrl-d
+    keybind.bind(chr(21), 'page_up')  # Ctrl-u
     keybind.bind('u', 'page_up')
     keybind.bind('d', 'page_down')
+    keybind.bind(chr(10), 'next_leaf')  # Ctrl-j
+    keybind.bind(chr(11), 'prev_leaf')  # Ctrl-k
 
 
 def register_actions(keybind, treepicker, tree_navigator):
@@ -32,3 +34,5 @@ def register_actions(keybind, treepicker, tree_navigator):
     keybind.add_action('toggle', treepicker.toggle)
     keybind.add_action('page_up', tree_navigator.page_up)
     keybind.add_action('page_down', tree_navigator.page_down)
+    keybind.add_action('next_leaf', tree_navigator.next_leaf)
+    keybind.add_action('prev_leaf', tree_navigator.prev_leaf)
