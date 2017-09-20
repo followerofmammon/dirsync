@@ -70,18 +70,19 @@ class TreeNavigator(object):
         # Find next parent
         next_parent = None
         original_selection = self._selected_node
-        while next_parent is None:
-            previously_selected_node = self._selected_node
-            distance = 1 if direction == self._DIRECTION_NEXT else -1
-            self._move_selection_relative(distance)
-            is_last_child_of_parent = self._selected_node == previously_selected_node
-            if is_last_child_of_parent and self._selected_node.identifier != self._tree.root:
-                self.go_up()
-                if self._selected_node.identifier == self._tree.root:
-                    self._selected_node = original_selection
-                    return
-            else:
-                next_parent = self._selected_node
+        if not self._sorted_children(original_selection):
+            while next_parent is None:
+                previously_selected_node = self._selected_node
+                distance = 1 if direction == self._DIRECTION_NEXT else -1
+                self._move_selection_relative(distance)
+                is_last_child_of_parent = self._selected_node == previously_selected_node
+                if is_last_child_of_parent and self._selected_node.identifier != self._tree.root:
+                    self.go_up()
+                    if self._selected_node.identifier == self._tree.root:
+                        self._selected_node = original_selection
+                        return
+                else:
+                    next_parent = self._selected_node
         self.explore_deepest_child()
 
     def set_tree(self, tree):
