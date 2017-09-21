@@ -1,3 +1,5 @@
+import os
+
 import dirtree
 import printer
 import treepicker
@@ -72,6 +74,12 @@ class InteractiveDirSync(object):
         _dirtree = dirtree.DirTree.factory_from_list_of_file_entries(self._selected.values(),
                                                                      self._src.fullpath())
         self._dst.copy_inner_entries_from_dirtree(_dirtree)
+
+    def _remove(self):
+        file_entries = self._selected.values()
+        for index, file_entry in enumerate(file_entries):
+            printer.print_string("Removing %s (%d out of %d)" % (file_entry, index + 1, len(file_entries)))
+            os.unlink(file_entry.full_filesystem_path())
 
 
 if __name__ == "__main__":
