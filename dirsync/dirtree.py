@@ -136,7 +136,11 @@ class DirTree(treelib.Tree):
                 if os.path.exists(new_file_entry.filesystem_dirpath):
                     assert os.path.isdir(new_file_entry.filesystem_dirpath)
                 else:
-                    os.makedirs(new_file_entry.filesystem_dirpath)
+                    try:
+                        os.makedirs(new_file_entry.filesystem_dirpath)
+                    except OSError as ex:
+                        printer.print_string("Copy failed: %s" % (str(ex),), "red")
+                        continue
                 shutil.copy(file_entry.full_filesystem_path(), new_file_entry.full_filesystem_path())
             except:
                 self.remove_node(new_file_entry.fullpath())
