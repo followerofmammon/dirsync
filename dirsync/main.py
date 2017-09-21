@@ -37,7 +37,7 @@ def main():
 
 
 if __name__ == "__main__":
-    if os.getenv('MODE') == 'static':
-        printer.wrapper(main)
-    else:
+    if os.getenv('MODE') == 'nonstatic':
         main()
+    else:
+        printer.wrapper(main)
