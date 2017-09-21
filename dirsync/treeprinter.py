@@ -18,7 +18,7 @@ class TreePrinter(object):
         self._tree_lines = None
         self._selected_node = None
         self._picked_nodes = None
-        self._max_nr_lines = len(tree.nodes) if max_nr_lines is None else self.DEFAULT_MAX_NR_LINES
+        self._max_nr_lines = self.DEFAULT_MAX_NR_LINES if max_nr_lines is None else max_nr_lines
         if self._max_nr_lines > self.MAX_ALLOWED_NR_LINES:
             self._max_nr_lines = self.DEFAULT_MAX_NR_LINES
         self._nodes_by_depth_cache = None
