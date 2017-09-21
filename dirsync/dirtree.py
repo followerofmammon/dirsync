@@ -78,8 +78,7 @@ class DirTree(treelib.Tree):
         printer.print_string("Scanning directory %s..." % (self._rootpath,))
         command = ["find", self._rootpath, "-regex", ".*.mp3\|.*.mp4\|.*.wav\|.*.wmv", "-type", "f"]
         output = subprocess.check_output(command)
-        lines = output.splitlines()
-        entries = lines[1:]
+        entries = output.splitlines()
         relative_filepaths = [entry[len(self._rootpath) + len(os.path.sep):] for entry in entries]
         non_existent_entries = [filepath for filepath in relative_filepaths if
                                 os.path.sep + os.path.join(self._root.name, filepath) not in self.nodes]
