@@ -7,8 +7,8 @@ import treepicker
 
 
 class FilesystemPicker(object):
-    def __init__(self, rootpath):
-        self._filesystem_tree = dirtree.DirTree.factory_from_filesystem(rootpath)
+    def __init__(self, rootpath, max_depth):
+        self._filesystem_tree = dirtree.DirTree.factory_from_filesystem(rootpath, max_depth)
         self._tree_picker = treepicker.TreePicker(self._filesystem_tree, min_nr_options=1, max_nr_options=1)
 
     def pick_one(self):
@@ -19,6 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dir", default=".")
     parser.add_argument("-x", "--execute", default=None)
+    parser.add_argument("-m", "--max-depth", default=None)
     return parser.parse_args()
 
 
@@ -32,7 +33,7 @@ def pick_wrapper(picker):
 
 def main():
     args = parse_args()
-    picker = FilesystemPicker(args.dir)
+    picker = FilesystemPicker(args.dir, args.max_depth)
     global picked_file
     if os.getenv('MODE') == 'nonstatic':
         picked_file = picker.pick_one()

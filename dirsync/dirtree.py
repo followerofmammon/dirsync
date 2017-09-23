@@ -50,10 +50,10 @@ class DirTree(treelib.Tree):
                                            data=self._root)
 
     @staticmethod
-    def factory_from_filesystem(filesystem_dirpath):
+    def factory_from_filesystem(filesystem_dirpath, max_depth=None):
         filesystem_dirpath = os.path.realpath(filesystem_dirpath)
         _dirtree = DirTree(filesystem_dirpath)
-        _dirtree.update_from_filesystem()
+        _dirtree.update_from_filesystem(max_depth)
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
 
@@ -74,9 +74,12 @@ class DirTree(treelib.Tree):
                                  parent=parent_dir_node.identifier)
         return _dirtree
 
-    def update_from_filesystem(self):
+    def update_from_filesystem(self, max_depth=None):
         printer.print_string("Scanning directory %s..." % (self._rootpath,))
         command = ["find", self._rootpath, "-regex", ".*.mp3\|.*.mp4\|.*.wav\|.*.wmv", "-type", "f"]
+        if max_depth is not None:
+            command.extend(["-maxdepth", str(max_depth)])
+        print command
         output = subprocess.check_output(command)
         entries = output.splitlines()
         relative_filepaths = [entry[len(self._rootpath) + len(os.path.sep):] for entry in entries]
