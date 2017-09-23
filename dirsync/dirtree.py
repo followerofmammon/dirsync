@@ -38,7 +38,11 @@ class FileEntry(object):
         return os.path.join(self.filesystem_dirpath, self.name)
 
 
+MUSIC_FILE_EXTENTIONS = ["mp3", "mp4", "wav", "ogg", "wmv", "wma"]
+
+
 class DirTree(treelib.Tree):
+
     def __init__(self, rootpath=None):
         super(DirTree, self).__init__()
         self._rootpath = os.path.realpath(rootpath)
@@ -50,10 +54,10 @@ class DirTree(treelib.Tree):
                                            data=self._root)
 
     @staticmethod
-    def factory_from_filesystem(filesystem_dirpath, max_depth=None):
+    def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None):
         filesystem_dirpath = os.path.realpath(filesystem_dirpath)
         _dirtree = DirTree(filesystem_dirpath)
-        _dirtree.update_from_filesystem(max_depth)
+        _dirtree.update_from_filesystem(max_depth, file_extentions)
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
 
@@ -74,12 +78,15 @@ class DirTree(treelib.Tree):
                                  parent=parent_dir_node.identifier)
         return _dirtree
 
-    def update_from_filesystem(self, max_depth=None):
+    def update_from_filesystem(self, max_depth=None, file_extentions=None):
         printer.print_string("Scanning directory %s..." % (self._rootpath,))
-        command = ["find", self._rootpath, "-regex", ".*.mp3\|.*.mp4\|.*.wav\|.*.wmv", "-type", "f"]
+        command = ["find", self._rootpath, "-type", "f"]
+        if file_extentions is not None:
+            command.append("-regex")
+            addition = ".*." + "\|.*.".join(file_extentions)
+            command.append(addition)
         if max_depth is not None:
             command.extend(["-maxdepth", str(max_depth)])
-        print command
         output = subprocess.check_output(command)
         entries = output.splitlines()
         relative_filepaths = [entry[len(self._rootpath) + len(os.path.sep):] for entry in entries]
