@@ -1,9 +1,9 @@
 import os
 import shutil
 import treelib
-import subprocess
 
 import printer
+import find_cmdwrapper
 
 
 class DirEntry(object):
@@ -54,10 +54,10 @@ class DirTree(treelib.Tree):
                                            data=self._root)
 
     @staticmethod
-    def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None):
+    def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None, dirs_only=False):
         filesystem_dirpath = os.path.realpath(filesystem_dirpath)
         _dirtree = DirTree(filesystem_dirpath)
-        _dirtree.update_from_filesystem(max_depth, file_extentions)
+        _dirtree.update_from_filesystem(max_depth, file_extentions, dirs_only)
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
 
@@ -71,29 +71,30 @@ class DirTree(treelib.Tree):
             if file_first_component != filesystem_basename:
                 raise ValueError("File's first path component must match that of filesystem path",
                                  file_entry, filesystem_dirpath, file_first_component, filesystem_basename)
-            parent_dir_node = _dirtree._get_parent_dir_node(inner_path)
+            inner_dirpath = os.path.dirname(inner_path)
+            parent_dir_node = _dirtree._get_dir_node(inner_dirpath)
             _dirtree.create_node(identifier=file_entry.fullpath(),
                                  tag=file_entry.name,
                                  data=file_entry,
                                  parent=parent_dir_node.identifier)
         return _dirtree
 
-    def update_from_filesystem(self, max_depth=None, file_extentions=None):
+    def abs_path_to_inner_path(self, _path):
+        rootpath_without_base = self._rootpath[:-len(os.path.basename(self._rootpath)) - 1]
+        return _path[len(rootpath_without_base) + len(os.path.sep):]
+
+    def update_from_filesystem(self, max_depth=None, file_extentions=None, dirs_only=False):
         printer.print_string("Scanning directory %s..." % (self._rootpath,))
-        command = ["find", self._rootpath, "-type", "f"]
-        if file_extentions is not None:
-            command.append("-regex")
-            addition = ".*." + "\|.*.".join(file_extentions)
-            command.append(addition)
-        if max_depth is not None:
-            command.extend(["-maxdepth", str(max_depth)])
-        output = subprocess.check_output(command)
-        entries = output.splitlines()
-        relative_filepaths = [entry[len(self._rootpath) + len(os.path.sep):] for entry in entries]
-        non_existent_entries = [filepath for filepath in relative_filepaths if
-                                os.path.sep + os.path.join(self._root.name, filepath) not in self.nodes]
-        for filepath in non_existent_entries:
-            self._add_file_by_path(filepath)
+        if not dirs_only:
+            entries = find_cmdwrapper.find_files(self._rootpath, max_depth, file_extentions)
+            inner_paths = [self.abs_path_to_inner_path(entry) for entry in entries]
+            non_existent_paths = [filepath for filepath in inner_paths if filepath not in self.nodes]
+            for filepath in non_existent_paths:
+                self._add_file_by_path(filepath)
+        dirnames_fullpath = find_cmdwrapper.find_dirs(self._rootpath, max_depth)
+        dirnames_inner_path = [self.abs_path_to_inner_path(_dir) for _dir in dirnames_fullpath]
+        for dirpath in dirnames_inner_path:
+            self._get_dir_node(dirpath)
 
     def iter_files(self):
         for node in self.nodes.itervalues():
@@ -128,10 +129,10 @@ class DirTree(treelib.Tree):
         relative_path = _path[len(prefix):]
         return relative_path
 
-    def _get_parent_dir_node(self, entry):
-        parts = entry.split(os.path.sep)
+    def _get_dir_node(self, dirpath):
+        parts = dirpath.split(os.path.sep)
         cur_subdir = self._root_node
-        for subdir_name in parts[:-1]:
+        for subdir_name in parts[1:]:
             cur_subdir = self._set_default_subdir(parent=cur_subdir, name=subdir_name)
         return cur_subdir
 
@@ -159,7 +160,8 @@ class DirTree(treelib.Tree):
         return entry.fullpath()[len(os.path.sep + self._root.name + os.path.sep):]
 
     def _add_file_by_path(self, filepath):
-        parent_dir_node = self._get_parent_dir_node(filepath)
+        dirpath = os.path.dirname(filepath)
+        parent_dir_node = self._get_dir_node(dirpath)
         filename = os.path.basename(filepath)
         _file = FileEntry(filename, parent_dir_entry=parent_dir_node.data)
         file_entry = self.create_node(identifier=_file.fullpath(),
