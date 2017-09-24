@@ -74,44 +74,59 @@ class TreePrinter(object):
                 color = "red"
             else:
                 color = None
-            prefix = ">" if node.identifier == self._selected_node.identifier else " "
-            prefix += " "
-            prefix += "X" if node.identifier in self._picked_nodes else " "
+            pre_line = ">" if node.identifier == self._selected_node.identifier else " "
+            pre_line += " "
+            pre_line += "X" if node.identifier in self._picked_nodes else " "
             if hasattr(node, 'original_matching') and node.original_matching and self._search_pattern:
                 color = "yellow"
-                prefix += "~"
+                pre_line += "~"
             else:
-                prefix += " "
+                pre_line += " "
             does_parent_in_height_n_has_more_nodes[depth] = not is_last_child
+            lower_depth_marks = ""
+            current_depth_marks = ""
             if node.identifier != self._root:
                 for lower_depth in xrange(1, depth):
                     if does_parent_in_height_n_has_more_nodes[lower_depth]:
-                        prefix += "\xe2\x94\x82   "
+                        lower_depth_marks += "\xe2\x94\x82   "
                     else:
-                        prefix += "    "
+                        lower_depth_marks += "    "
                 if is_last_child:
-                    prefix += '\xe2\x94\x94'
+                    current_depth_marks += '\xe2\x94\x94'
                 else:
-                    prefix += '\xe2\x94\x9c'
-                prefix += '\xe2\x94\x80' * 2
-                prefix += " "
-            line = prefix
-            line += node.tag
-            if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
-                line += " (...)"
+                    current_depth_marks += '\xe2\x94\x9c'
+                current_depth_marks += '\xe2\x94\x80' * 2
+                current_depth_marks += " "
+            prefix = pre_line + lower_depth_marks + current_depth_marks
+            lines = node.tag.splitlines()
+            lines[0] = prefix + lines[0]
+            non_first_lines_addition = ' ' * len(pre_line) + lower_depth_marks
+            if is_last_child:
+                non_first_lines_addition += '   '
+            else:
+                non_first_lines_addition += '\xe2\x94\x82' + '  '
+            for index in xrange(1, len(lines)):
+                lines[index] = non_first_lines_addition + lines[index]
+            if lines[1:]:
+                import pdb
+                # pdb.set_trace()
             if node.bpointer == self._selected_node.bpointer:
                 index_in_siblings_of_selected += 1
                 if nr_items_to_remove_at_beginning and index_in_siblings_of_selected == 1:
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_beginning)
                     yield tag, None
-                if index_in_siblings_of_selected <= nr_items_to_remove_at_beginning:
+                elif index_in_siblings_of_selected <= nr_items_to_remove_at_beginning:
                     continue
-                if nr_items_to_remove_at_end and index_in_siblings_of_selected == len(siblings_of_selected):
+                elif (nr_items_to_remove_at_end and
+                      index_in_siblings_of_selected == len(siblings_of_selected)):
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_end)
                     yield tag, None
-                if index_in_siblings_of_selected > len(siblings_of_selected) - nr_items_to_remove_at_end:
+                elif index_in_siblings_of_selected > len(siblings_of_selected) - nr_items_to_remove_at_end:
                     continue
-            yield line, color
+            if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
+                lines[-1] += " (...)"
+            for line in lines:
+                yield line, color
 
     def _children(self, tree, nid):
         return [node for node in tree.children(nid) if
