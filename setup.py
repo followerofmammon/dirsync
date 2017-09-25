@@ -6,6 +6,7 @@ setup(
     setup_requires=[
         'pbr >= 1.9',
         'setuptools >= 17.1'
+        'treelib==1.4.0'
     ],
     pbr=True
 )
