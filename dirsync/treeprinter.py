@@ -148,10 +148,22 @@ class TreePrinter(object):
         else:
             self._root = self._selected_node.bpointer
         min_depth = self._tree.depth(self._selected_node)
-        self._max_allowed_depth = treeops.get_max_possible_depth(self._tree,
-                                                                 self._root,
-                                                                 self._max_nr_lines,
-                                                                 min_depth=min_depth)
+        self._max_allowed_depth, node_counter = treeops.get_max_possible_depth(self._tree,
+                                                                               self._root,
+                                                                               self._max_nr_lines,
+                                                                               min_depth=min_depth)
+        candidate_root = self._root
+        candidate_depth = self._max_allowed_depth
+        while node_counter < self._max_nr_lines:
+            self._root = candidate_root
+            self._max_allowed_depth = candidate_depth
+            candidate_root = self._tree.get_node(self._root).bpointer
+            if candidate_root is None:
+                break
+            candidate_depth, node_counter = treeops.get_max_possible_depth(self._tree,
+                                                                           candidate_root,
+                                                                           self._max_nr_lines,
+                                                                           min_depth=min_depth)
 
     @staticmethod
     def _node_key(node):

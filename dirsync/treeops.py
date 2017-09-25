@@ -17,4 +17,4 @@ def get_max_possible_depth(tree, root, max_nr_lines, min_depth):
                 bfs_queue.append((child, depth + 1))
     if node_counter <= max_nr_lines and depth > max_depth:
         max_depth = depth
-    return max_depth - root_depth
+    return max_depth - root_depth, node_counter
