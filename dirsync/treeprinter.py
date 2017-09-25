@@ -78,7 +78,8 @@ class TreePrinter(object):
             pre_line += " "
             pre_line += "X" if node.identifier in self._picked_nodes else " "
             if hasattr(node, 'original_matching') and node.original_matching and self._search_pattern:
-                color = "yellow"
+                if color is None:
+                    color = "yellow"
                 pre_line += "~"
             else:
                 pre_line += " "
@@ -107,9 +108,6 @@ class TreePrinter(object):
                 non_first_lines_addition += '\xe2\x94\x82' + '  '
             for index in xrange(1, len(lines)):
                 lines[index] = non_first_lines_addition + lines[index]
-            if lines[1:]:
-                import pdb
-                # pdb.set_trace()
             if node.bpointer == self._selected_node.bpointer:
                 index_in_siblings_of_selected += 1
                 if nr_items_to_remove_at_beginning and index_in_siblings_of_selected == 1:
