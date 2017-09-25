@@ -90,9 +90,13 @@ class TreeNavigator(object):
         self._sorted_children_by_nid_cache = dict()
         self._calculate_initial_selected_node()
 
+    def _node_index_in_list(self, nodes, node):
+        match = [idx for idx, _node in enumerate(nodes) if _node.identifier == node.identifier]
+        return match[0]
+
     def _move_selection_relative(self, distance):
         siblings = self._get_siblings()
-        wanted_index = siblings.index(self._selected_node) + distance
+        wanted_index = self._node_index_in_list(siblings, self._selected_node) + distance
         if wanted_index >= 0 and wanted_index < len(siblings):
             self._selected_node = siblings[wanted_index]
         elif wanted_index < 0:
