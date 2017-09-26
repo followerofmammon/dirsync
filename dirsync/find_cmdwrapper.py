@@ -30,8 +30,6 @@ def _get_base_command(rootpath):
 
 
 def _get_command_output(command):
-    print ' '.join(command)
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    proc.wait()
-    output = proc.stdout.read()
+    output, _ = proc.communicate()
     return output.splitlines()
