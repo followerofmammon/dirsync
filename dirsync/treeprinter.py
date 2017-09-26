@@ -55,7 +55,7 @@ class TreePrinter(object):
             if depth < self._max_allowed_depth:
                 children = self._children(tree, node.identifier)
                 if node.identifier == self._node_shown_as_selected.bpointer:
-                    siblings_of_selected = list(children)
+                    siblings_of_selected = children
                 if children:
                     children.sort(self._compare_nodes)
                     dfs_stack.append((children[0], depth + 1, True))
@@ -115,12 +115,14 @@ class TreePrinter(object):
                 if nr_items_to_remove_at_beginning and index_in_siblings_of_selected == 1:
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_beginning)
                     yield tag, None
+                    continue
                 elif index_in_siblings_of_selected <= nr_items_to_remove_at_beginning:
                     continue
                 elif (nr_items_to_remove_at_end and
                       index_in_siblings_of_selected == len(siblings_of_selected)):
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_end)
                     yield tag, None
+                    continue
                 elif index_in_siblings_of_selected > len(siblings_of_selected) - nr_items_to_remove_at_end:
                     continue
             if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
