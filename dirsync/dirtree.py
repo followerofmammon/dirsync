@@ -43,8 +43,9 @@ MUSIC_FILE_EXTENTIONS = ["mp3", "mp4", "wav", "ogg", "wmv", "wma"]
 
 class DirTree(treelib.Tree):
 
-    def __init__(self, rootpath=None):
+    def __init__(self, rootpath=None, silent=False):
         super(DirTree, self).__init__()
+        self._silent = silent
         self._rootpath = os.path.realpath(rootpath)
         self._root = DirEntry(path=os.path.sep,
                               name=os.path.basename(rootpath),
@@ -55,9 +56,9 @@ class DirTree(treelib.Tree):
 
     @staticmethod
     def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None, dirs_only=False,
-                                include_hidden=True):
+                                include_hidden=True, silent=False):
         filesystem_dirpath = os.path.realpath(filesystem_dirpath)
-        _dirtree = DirTree(filesystem_dirpath)
+        _dirtree = DirTree(filesystem_dirpath, silent)
         _dirtree.update_from_filesystem(max_depth, file_extentions, dirs_only, include_hidden)
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
@@ -86,7 +87,8 @@ class DirTree(treelib.Tree):
 
     def update_from_filesystem(self, max_depth=None, file_extentions=None, dirs_only=False,
                                include_hidden=True):
-        printer.print_string("Scanning directory %s..." % (self._rootpath,))
+        if not self._silent:
+            printer.print_string("Scanning directory %s..." % (self._rootpath,))
         if not dirs_only:
             entries = find_cmdwrapper.find_files(self._rootpath, max_depth, file_extentions, include_hidden)
             inner_paths = [self.abs_path_to_inner_path(entry) for entry in entries]

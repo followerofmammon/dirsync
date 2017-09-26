@@ -7,11 +7,13 @@ class TreeNavigator(object):
         self._calculate_initial_selected_node()
 
     def get_selected_node(self):
+        if self._selected_node is None:
+            return None
         return self._selected_node.identifier
 
     def select_first_match(self):
         if not self._selected_node.original_matching:
-            self._selected_node = self._tree.get_node(self._tree.root)
+            self.go_to_root()
         while not self._selected_node.original_matching:
             previous = self._selected_node
             self.explore()
@@ -57,7 +59,12 @@ class TreeNavigator(object):
     _DIRECTION_PREV = 2
 
     def go_to_root(self):
-        self._selected_node = self._tree.get_node(self._tree.root)
+        # self._selected_node = self._tree.get_node(self._tree.root)
+        root = self._tree.get_node(self._tree.root)
+        if self._including_root:
+            self._selected_node = root
+        else:
+            self._selected_node = self._children(root)[0]
 
     def explore_deepest_child(self):
         while True:
@@ -109,9 +116,12 @@ class TreeNavigator(object):
         if node is None or node.identifier not in self._tree.nodes:
             node = self._tree.get_node(self._tree.root)
             if not self._including_root:
-                children = self._tree.children(self._tree.root)
-                assert children, "Root must have children if including_root==False"
-                node = self._sorted_children(node)[0]
+                children = self._sorted_children(node)
+                # assert children, "Root must have children if including_root==False"
+                if children:
+                    node = children[0]
+                else:
+                    node = None
         self._selected_node = node
 
     def _move_selection_absolute(self, index):

@@ -13,7 +13,7 @@ class TreePrinter(object):
     _DATA_THAT_WILL_APPEAR_FIRST = chr(0)
     _DATA_THAT_WILL_APPEAR_LAST = chr(127)
 
-    def __init__(self, tree, max_nr_lines=None):
+    def __init__(self, tree, max_nr_lines=None, including_root=True):
         self._tree = tree
         self._tree_lines = None
         self._selected_node = None
@@ -26,6 +26,7 @@ class TreePrinter(object):
         self._root = None
         self._max_allowed_depth = None
         self._search_pattern = ""
+        self._including_root = including_root
 
     def calculate_lines_to_print(self, selected_node_id, picked_nodes, search_pattern):
         self._selected_node = self._tree.get_node(selected_node_id)
@@ -35,10 +36,11 @@ class TreePrinter(object):
         self._prepare_tree_for_printing()
         self._tree_lines = list(self._get_tree_lines())
 
-    def print_tree(self):
-        for line, color in self._tree_lines:
-            printer.print_string(line, color)
-        self._print_info_lines()
+    def print_tree(self, print_info_line=True):
+        for line, color, is_bold in self._tree_lines:
+            printer.print_string(line, color, is_bold)
+        if print_info_line:
+            self._print_info_lines()
 
     def _get_tree_lines(self):
         tree = self._tree
@@ -48,12 +50,15 @@ class TreePrinter(object):
         dfs_stack = [(tree.get_node(self._root), depth, is_last_child)]
         lines = []
         siblings_of_selected = None
+        children_of_root = None
         while dfs_stack:
             node, depth, is_last_child = dfs_stack.pop()
             max_depth = max(depth, max_depth)
             lines.append((node, depth, is_last_child))
             if depth < self._max_allowed_depth:
                 children = self._children(tree, node.identifier)
+                if node.identifier == self._tree.root:
+                    children_of_root = children
                 if node.identifier == self._node_shown_as_selected.bpointer:
                     siblings_of_selected = children
                 if children:
@@ -70,6 +75,8 @@ class TreePrinter(object):
                 pagination.paginate(len(siblings_of_selected), index_of_selected, self._max_nr_lines))
         index_in_siblings_of_selected = 0
         for node, depth, is_last_child in lines:
+            if not self._including_root and node.identifier == self._tree.root:
+                continue
             if node.identifier == self._node_shown_as_selected.identifier:
                 color = "blue" if node.identifier in self._picked_nodes else "green"
             elif node.identifier in self._picked_nodes:
@@ -97,38 +104,51 @@ class TreePrinter(object):
                 if is_last_child:
                     current_depth_marks += '\xe2\x94\x94'
                 else:
-                    current_depth_marks += '\xe2\x94\x9c'
+                    if not self._including_root and node == children_of_root[0]:
+                        current_depth_marks += '\xe2\x94\x8c'
+                    else:
+                        current_depth_marks += '\xe2\x94\x9c'
                 current_depth_marks += '\xe2\x94\x80' * 2
                 current_depth_marks += " "
             prefix = pre_line + lower_depth_marks + current_depth_marks
-            lines = node.tag.splitlines()
-            lines[0] = prefix + lines[0]
+            if isinstance(node.tag, str):
+                node_lines = [[node_line, color, False] for node_line in node.tag.splitlines()]
+            else:
+                node_lines = [[node_line[0],
+                               color if node_line[1] is None else node_line[1],
+                               node_line[2]]
+                              for node_line in node.tag]
+            node_lines[0][0] = prefix + node_lines[0][0]
             non_first_lines_addition = ' ' * len(pre_line) + lower_depth_marks
             if is_last_child:
                 non_first_lines_addition += '   '
             else:
                 non_first_lines_addition += '\xe2\x94\x82' + '  '
-            for index in xrange(1, len(lines)):
-                lines[index] = non_first_lines_addition + lines[index]
+            for index in xrange(1, len(node_lines)):
+                node_lines[index][0] = non_first_lines_addition + node_lines[index][0]
             if node.bpointer == self._node_shown_as_selected.bpointer:
                 index_in_siblings_of_selected += 1
                 if nr_items_to_remove_at_beginning and index_in_siblings_of_selected == 1:
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_beginning)
-                    yield tag, None
+                    yield tag, None, False
                     continue
                 elif index_in_siblings_of_selected <= nr_items_to_remove_at_beginning:
                     continue
                 elif (nr_items_to_remove_at_end and
                       index_in_siblings_of_selected == len(siblings_of_selected)):
                     tag = prefix + "... (%d more)" % (nr_items_to_remove_at_end)
-                    yield tag, None
+                    yield tag, None, False
                     continue
                 elif index_in_siblings_of_selected > len(siblings_of_selected) - nr_items_to_remove_at_end:
                     continue
             if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
-                lines[-1] += " (...)"
-            for line in lines:
-                yield line, color
+                node_lines[-1][0] += " (...)"
+            if depth == max_depth:
+                lines_to_print = node_lines
+            else:
+                lines_to_print = [node_lines[0]]
+            for line, color, is_bold in lines_to_print:
+                yield line, color, is_bold
 
     def _children(self, tree, nid):
         return [node for node in tree.children(nid) if
@@ -145,14 +165,21 @@ class TreePrinter(object):
         return result
 
     def _print_info_lines(self):
-        label = self._selected_node.tag if self._selected_node.data is None else self._selected_node.data
-        header = "Current: %s, %d items selected" % (label, len(self._picked_nodes))
+        if self._selected_node is None:
+            header = "No node selected"
+        else:
+            label = self._selected_node.tag if self._selected_node.data is None else self._selected_node.data
+            header = "Current: %s, %d items selected" % (label, len(self._picked_nodes))
         printer.print_string(header)
 
     def _prepare_tree_for_printing(self):
         # Find root node from which to print tree
-        is_selected_node_in_filter = not hasattr(self._selected_node, 'matching') or self._selected_node.matching
-        if self._selected_node.identifier == self._tree.root:
+        is_selected_node_in_filter = (self._selected_node is not None and
+                                      (not hasattr(self._selected_node, 'matching') or
+                                       self._selected_node.matching))
+        if self._selected_node is None:
+            self._root = self._tree.root
+        elif self._selected_node.identifier == self._tree.root:
             self._root = self._tree.root
         elif is_selected_node_in_filter:
             self._root = self._selected_node.bpointer

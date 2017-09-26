@@ -13,8 +13,10 @@ class InteractiveDirSync(object):
     _OPTION_RESELECT = "Reselect files"
 
     def __init__(self, src, dst):
-        self._src = dirtree.DirTree.factory_from_filesystem(src, file_extentions=dirtree.MUSIC_FILE_EXTENTIONS)
-        self._dst = dirtree.DirTree.factory_from_filesystem(dst, file_extentions=dirtree.MUSIC_FILE_EXTENTIONS)
+        self._src = dirtree.DirTree.factory_from_filesystem(src,
+                                                            file_extentions=dirtree.MUSIC_FILE_EXTENTIONS)
+        self._dst = dirtree.DirTree.factory_from_filesystem(dst,
+                                                            file_extentions=dirtree.MUSIC_FILE_EXTENTIONS)
         self._selected = dict()
 
     def sync(self):

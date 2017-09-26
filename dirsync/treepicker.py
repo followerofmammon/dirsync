@@ -31,7 +31,8 @@ class TreePicker(object):
         self._tree_navigator = treenavigator.TreeNavigator(self._tree, including_root)
         keybindings.populate_bindings(self._navigation_actions)
         keybindings.register_actions(self._navigation_actions, self, self._tree_navigator)
-        self._shelloutput = shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines)
+        self._shelloutput = shelloutput.TreePickerShellOutput(self._tree, self._header, max_nr_lines,
+                                                              including_root)
         self._were_search_results_changed_since_navigation = False
 
     def pick_one(self):
@@ -66,7 +67,10 @@ class TreePicker(object):
                     self._mode = self._MODE_NAVIGATION
                     self._set_tree_for_navigation()
             elif self._mode == self._MODE_RETURN:
-                picked = self._picked.values()
+                if self._picked and self._tree_navigator.get_selected_node() is not None:
+                    picked = self._picked.values()
+                else:
+                    self._mode = self._MODE_NAVIGATION
             elif self._mode == self._MODE_QUIT:
                 picked = list()
             else:
