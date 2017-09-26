@@ -154,7 +154,7 @@ class TreePrinter(object):
                                                                                min_depth=min_depth)
         candidate_root = self._root
         candidate_depth = self._max_allowed_depth
-        while node_counter < self._max_nr_lines:
+        while node_counter <= self._max_nr_lines:
             self._root = candidate_root
             self._max_allowed_depth = candidate_depth
             candidate_root = self._tree.get_node(self._root).bpointer
