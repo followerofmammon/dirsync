@@ -22,7 +22,7 @@ def wrapper(main, *args, **kwargs):
         _printer = _CursesWindowPrinter(window)
         main(*args, **kwargs)
 
-    if not os.getenv("nonstatic", False):
+    if os.getenv("MODE", "") == "nonstatic":
         main(*args, **kwargs)
     else:
         locale.setlocale(locale.LC_ALL, "")

@@ -50,15 +50,15 @@ class TreePrinter(object):
         dfs_stack = [(tree.get_node(self._root), depth, is_last_child)]
         lines = []
         siblings_of_selected = None
-        children_of_root = None
+        children_of_root = self._children(self._tree, self._tree.root)
+        children_of_root.sort(self._compare_nodes)
+        children_of_root.reverse()
         while dfs_stack:
             node, depth, is_last_child = dfs_stack.pop()
             max_depth = max(depth, max_depth)
             lines.append((node, depth, is_last_child))
             if depth < self._max_allowed_depth:
                 children = self._children(tree, node.identifier)
-                if node.identifier == self._tree.root:
-                    children_of_root = children
                 if node.identifier == self._node_shown_as_selected.bpointer:
                     siblings_of_selected = children
                 if children:
