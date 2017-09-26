@@ -24,7 +24,10 @@ def find_dirs(rootpath, max_depth):
 def _get_base_command(rootpath):
     return ["find", rootpath]
 
+
 def _get_command_output(command):
     print ' '.join(command)
-    output = subprocess.check_output(command)
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc.wait()
+    output = proc.stdout.read()
     return output.splitlines()
