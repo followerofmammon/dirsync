@@ -54,10 +54,11 @@ class DirTree(treelib.Tree):
                                            data=self._root)
 
     @staticmethod
-    def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None, dirs_only=False):
+    def factory_from_filesystem(filesystem_dirpath, max_depth=None, file_extentions=None, dirs_only=False,
+                                include_hidden=True):
         filesystem_dirpath = os.path.realpath(filesystem_dirpath)
         _dirtree = DirTree(filesystem_dirpath)
-        _dirtree.update_from_filesystem(max_depth, file_extentions, dirs_only)
+        _dirtree.update_from_filesystem(max_depth, file_extentions, dirs_only, include_hidden)
         _dirtree.children(_dirtree._root_node.identifier).sort()
         return _dirtree
 
@@ -83,15 +84,16 @@ class DirTree(treelib.Tree):
         rootpath_without_base = self._rootpath[:-len(os.path.basename(self._rootpath)) - 1]
         return _path[len(rootpath_without_base) + len(os.path.sep):]
 
-    def update_from_filesystem(self, max_depth=None, file_extentions=None, dirs_only=False):
+    def update_from_filesystem(self, max_depth=None, file_extentions=None, dirs_only=False,
+                               include_hidden=True):
         printer.print_string("Scanning directory %s..." % (self._rootpath,))
         if not dirs_only:
-            entries = find_cmdwrapper.find_files(self._rootpath, max_depth, file_extentions)
+            entries = find_cmdwrapper.find_files(self._rootpath, max_depth, file_extentions, include_hidden)
             inner_paths = [self.abs_path_to_inner_path(entry) for entry in entries]
             non_existent_paths = [filepath for filepath in inner_paths if filepath not in self.nodes]
             for filepath in non_existent_paths:
                 self._add_file_by_path(filepath)
-        dirnames_fullpath = find_cmdwrapper.find_dirs(self._rootpath, max_depth)
+        dirnames_fullpath = find_cmdwrapper.find_dirs(self._rootpath, max_depth, include_hidden)
         dirnames_inner_path = [self.abs_path_to_inner_path(_dir) for _dir in dirnames_fullpath]
         for dirpath in dirnames_inner_path:
             self._get_dir_node(dirpath)

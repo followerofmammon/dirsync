@@ -1,7 +1,7 @@
 import subprocess
 
 
-def find_files(rootpath, max_depth=None, file_extentions=None):
+def find_files(rootpath, max_depth=None, file_extentions=None, include_hidden=True):
     command = _get_base_command(rootpath)
     if max_depth is not None:
         command.extend(["-maxdepth", str(max_depth)])
@@ -10,14 +10,18 @@ def find_files(rootpath, max_depth=None, file_extentions=None):
         addition = ".*." + "\|.*.".join(file_extentions)
         command.append(addition)
     command += ["-type", "f"]
+    if not include_hidden:
+        command += ['-not', '-path', '*/\\.*']
     return _get_command_output(command)
 
 
-def find_dirs(rootpath, max_depth):
+def find_dirs(rootpath, max_depth, include_hidden=True):
     command = _get_base_command(rootpath)
     if max_depth is not None:
         command.extend(["-maxdepth", str(max_depth)])
     command += ["-type", "d"]
+    if not include_hidden:
+        command += ['-not', '-path', '*/\\.*']
     return _get_command_output(command)
 
 
