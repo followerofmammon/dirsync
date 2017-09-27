@@ -131,7 +131,8 @@ class TreeNavigator(object):
     def _sorted_children(self, node):
         nid = node.identifier
         if nid not in self._sorted_children_by_nid_cache:
-            self._sorted_children_by_nid_cache[nid] = sorted(self._tree.children(nid))
+            self._sorted_children_by_nid_cache[nid] = sorted(self._tree.children(nid),
+                                                             key=self._node_key)
         return self._sorted_children_by_nid_cache[nid]
 
     def _get_siblings(self):
@@ -139,3 +140,11 @@ class TreeNavigator(object):
             return [self._tree.get_node(self._tree.root)]
         parent = self._tree.get_node(self._selected_node.bpointer)
         return self._sorted_children(parent)
+
+    @staticmethod
+    def _node_key(node):
+        return str(node.data)
+
+    @classmethod
+    def _compare_nodes(cls, node_a, node_b):
+        return 1 if cls._node_key(node_a) < cls._node_key(node_b) else -1
