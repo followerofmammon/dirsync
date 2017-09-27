@@ -143,10 +143,11 @@ class TreePrinter(object):
                     continue
             if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
                 node_lines[-1][0] += " (...)"
-            if depth == max_depth:
-                lines_to_print = node_lines
-            else:
-                lines_to_print = [node_lines[0]]
+            #if depth == max_depth:
+            #    lines_to_print = node_lines
+            #else:
+            #    lines_to_print = [node_lines[0]]
+            lines_to_print = node_lines
             for line, color, is_bold in lines_to_print:
                 yield line, color, is_bold
 
