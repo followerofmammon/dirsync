@@ -112,43 +112,48 @@ class TreePrinter(object):
                 current_depth_marks += " "
             prefix = pre_line + lower_depth_marks + current_depth_marks
             if isinstance(node.tag, str):
-                node_lines = [[node_line, color, False] for node_line in node.tag.splitlines()]
+                tag_lines = [[[node_line, color, False]] for node_line in node.tag.splitlines()]
             else:
-                node_lines = [[node_line[0],
-                               color if node_line[1] is None else node_line[1],
-                               node_line[2]]
-                              for node_line in node.tag]
-            node_lines[0][0] = prefix + node_lines[0][0]
+                tag_lines = list(node.tag)
+
+            lines = list()
+            lines.append((prefix, color, False))
+            lines.extend(tag_lines[0])
+            lines.append(('\n', None, False))
             non_first_lines_addition = ' ' * len(pre_line) + lower_depth_marks
             if is_last_child:
                 non_first_lines_addition += '   '
             else:
                 non_first_lines_addition += '\xe2\x94\x82' + '  '
-            for index in xrange(1, len(node_lines)):
-                node_lines[index][0] = non_first_lines_addition + node_lines[index][0]
+            for tag_line in tag_lines[1:]:
+                lines.append((non_first_lines_addition, None, False))
+                lines.extend(tag_line)
+                lines.append(('\n', None, False))
+
             if node.bpointer == self._node_shown_as_selected.bpointer:
                 index_in_siblings_of_selected += 1
                 if nr_items_to_remove_at_beginning and index_in_siblings_of_selected == 1:
-                    tag = prefix + "... (%d more)" % (nr_items_to_remove_at_beginning)
+                    tag = prefix + "... (%d more)\n" % (nr_items_to_remove_at_beginning)
                     yield tag, None, False
                     continue
                 elif index_in_siblings_of_selected <= nr_items_to_remove_at_beginning:
                     continue
                 elif (nr_items_to_remove_at_end and
                       index_in_siblings_of_selected == len(siblings_of_selected)):
-                    tag = prefix + "... (%d more)" % (nr_items_to_remove_at_end)
+                    tag = prefix + "... (%d more)\n" % (nr_items_to_remove_at_end)
                     yield tag, None, False
                     continue
                 elif index_in_siblings_of_selected > len(siblings_of_selected) - nr_items_to_remove_at_end:
                     continue
+
             if self._children(tree, node.identifier) and depth == self._max_allowed_depth:
-                node_lines[-1][0] += " (...)"
-            #if depth == max_depth:
-            #    lines_to_print = node_lines
-            #else:
-            #    lines_to_print = [node_lines[0]]
-            lines_to_print = node_lines
-            for line, color, is_bold in lines_to_print:
+                if len(tag_lines) > 1:
+                    addition = '\n' + non_first_lines_addition
+                else:
+                    addition = ' '
+                lines[-1] = (lines[-1][0][:-1] + addition + "(...)" + "\n", lines[-1][1], lines[-1][2],)
+
+            for line, color, is_bold in lines:
                 yield line, color, is_bold
 
     def _children(self, tree, nid):
@@ -171,7 +176,7 @@ class TreePrinter(object):
         else:
             label = self._selected_node.tag if self._selected_node.data is None else self._selected_node.data
             header = "Current: %s, %d items selected" % (label, len(self._picked_nodes))
-        printer.print_string(header)
+        printer.print_string(header + "\n")
 
     def _prepare_tree_for_printing(self):
         # Find root node from which to print tree

@@ -12,7 +12,7 @@ class TreePickerShellOutput(object):
         self._tree_printer.calculate_lines_to_print(selected_node, picked_nodes, search_pattern)
         printer.clear_screen()
         if self._header is not None:
-            printer.print_string(self._header)
+            printer.print_string(self._header + "\n")
         self._tree_printer.print_tree()
         footer = ""
         is_search_pattern_being_edited = mode in (treepicker.TreePicker._MODE_SEARCH,
