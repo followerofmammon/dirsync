@@ -16,7 +16,7 @@ class TreePicker(object):
     _MODE_INTERACTIVE_SEARCH = 'interactive search'
     _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
-    BUILTIN_HEADER = ("Navigation: [Ctrl+]h,j,k,l, Search: /, Non-interactive search: Ctrl+/, "
+    BUILTIN_HEADER = ("Navigation: [Ctrl+]h,j,k,l, First: g, Last: G, Search: /, Non-interactive search: Ctrl+/, "
                       "Quit: q")
 
     def __init__(self, tree, including_root=True, header="", max_nr_lines=None,
