@@ -16,15 +16,17 @@ class TreePicker(object):
     _MODE_INTERACTIVE_SEARCH = 'interactive search'
     _MODE_RETURN = 'return'
     _MODE_QUIT = 'quit'
+    BUILTIN_HEADER = ("Navigation: [Ctrl+]h,j,k,l, Search: /, Non-interactive search: Ctrl+/, "
+                      "Quit: q")
 
-    def __init__(self, tree, including_root=True, header=None, max_nr_lines=None,
+    def __init__(self, tree, including_root=True, header="", max_nr_lines=None,
                  min_nr_options=1, max_nr_options=None):
         self._tree = tree
         self._min_nr_options = min_nr_options
         self._max_nr_options = len(self._tree) if max_nr_options is None else max_nr_options
         self._picked = dict()
         self._mode = self._MODE_NAVIGATION
-        self._header = header
+        self._header = header + '\n' + self.BUILTIN_HEADER
         self._tree_search = treesearch.TreeSearch(self._tree)
         self._line_scanner = linescanner.LineScanner()
         self._navigation_actions = keybind.KeyBind()
