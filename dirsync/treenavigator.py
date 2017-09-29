@@ -66,31 +66,39 @@ class TreeNavigator(object):
         else:
             self._selected_node = self._sorted_children(root)[0]
 
-    def explore_deepest_child(self):
+    def explore_deepest_child(self, direction=_DIRECTION_NEXT):
         while True:
             previously_selected_node = self._selected_node
             self.explore()
             if previously_selected_node == self._selected_node:
                 break
+            if direction == self._DIRECTION_PREV:
+                self.last_node()
 
     def _move_selection_relative_leaf(self, direction):
         # Find next parent
         next_parent = None
         original_selection = self._selected_node
-        if not self._sorted_children(original_selection):
+        self.explore_deepest_child()
+        if original_selection == self._selected_node:
+            was_there_any_movement_next_or_prev = False
             while next_parent is None:
                 previously_selected_node = self._selected_node
                 distance = 1 if direction == self._DIRECTION_NEXT else -1
                 self._move_selection_relative(distance)
                 is_last_child_of_parent = self._selected_node == previously_selected_node
+                was_there_any_movement_next_or_prev |= not is_last_child_of_parent
                 if is_last_child_of_parent and self._selected_node.identifier != self._tree.root:
                     self.go_up()
+                    if previously_selected_node == self._selected_node:
+                        self._selected_node = original_selection
+                        return
                     if self._selected_node.identifier == self._tree.root:
                         self._selected_node = original_selection
                         return
                 else:
                     next_parent = self._selected_node
-        self.explore_deepest_child()
+            self.explore_deepest_child(direction)
 
     def set_tree(self, tree):
         self._tree = tree
