@@ -64,7 +64,7 @@ class TreeNavigator(object):
         if self._including_root:
             self._selected_node = root
         else:
-            self._selected_node = self._children(root)[0]
+            self._selected_node = self._sorted_children(root)[0]
 
     def explore_deepest_child(self):
         while True:
