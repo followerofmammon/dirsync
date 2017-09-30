@@ -1,4 +1,5 @@
 import os
+import sys
 import curses
 import locale
 import termcolor
@@ -141,12 +142,12 @@ class _ConsolePrinter(_Printer):
 
     def print_string(self, string, color=None, is_bold=False):
         if color is None:
-            print string,
+            sys.stdout.write(string)
         else:
             attrs = list()
             if is_bold:
                 attrs.append('bold')
-            print termcolor.colored(string, color, attrs=attrs),
+            sys.stdout.write(termcolor.colored(string, color, attrs=attrs))
 
     def clear_screen(self):
         print
