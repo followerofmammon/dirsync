@@ -26,7 +26,7 @@ class TreePicker(object):
         self._max_nr_options = len(self._tree) if max_nr_options is None else max_nr_options
         self._picked = dict()
         self._mode = self._MODE_NAVIGATION
-        self._header = header + '\n' + self.BUILTIN_HEADER
+        self._header = (header + '\n' + self.BUILTIN_HEADER).strip()
         self._tree_search = treesearch.TreeSearch(self._tree)
         self._line_scanner = linescanner.LineScanner()
         self._navigation_actions = keybind.KeyBind()
