@@ -83,7 +83,7 @@ class DirTree(treelib.Tree):
 
     def abs_path_to_inner_path(self, _path):
         rootpath_without_base = self._rootpath[:-len(os.path.basename(self._rootpath)) - 1]
-        return _path[len(rootpath_without_base) + len(os.path.sep):]
+        return _path[len(rootpath_without_base):]
 
     def update_from_filesystem(self, max_depth=None, file_extentions=None, dirs_only=False,
                                include_hidden=True):
@@ -117,10 +117,9 @@ class DirTree(treelib.Tree):
         unknown_files = [file_entry for file_entry in other.iter_files() if
                          replace_prefix(file_entry.fullpath()) not in self.nodes]
 
-        other_prefix = os.path.basename(other.fullpath())
         for _file in unknown_files:
-            relative_path = self._remove_prefix_from_path(other_prefix, _file.fullpath())
-            unknown_files_dirtree._add_file_by_path(relative_path)
+            fullpath = replace_prefix(_file.fullpath())
+            unknown_files_dirtree._add_file_by_path(fullpath)
         return unknown_files_dirtree
 
     def does_dir_contain_any_files(self):
@@ -136,7 +135,7 @@ class DirTree(treelib.Tree):
     def _get_dir_node(self, dirpath):
         parts = dirpath.split(os.path.sep)
         cur_subdir = self._root_node
-        for subdir_name in parts[1:]:
+        for subdir_name in parts[2:]:
             cur_subdir = self._set_default_subdir(parent=cur_subdir, name=subdir_name)
         return cur_subdir
 
@@ -144,8 +143,7 @@ class DirTree(treelib.Tree):
         files = list(dirtree.iter_files())
         for index, file_entry in enumerate(files):
             printer.print_string("Copying %s (%d out of %d)" % (file_entry, index + 1, len(files)))
-            inner_path = dirtree.get_inner_path_of_entry(file_entry)
-            new_file_entry = self._add_file_by_path(inner_path)
+            new_file_entry = self._add_file_by_path(file_entry.fullpath())
             try:
                 if os.path.exists(new_file_entry.filesystem_dirpath):
                     assert os.path.isdir(new_file_entry.filesystem_dirpath)
