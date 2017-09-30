@@ -1,4 +1,5 @@
 install:
+	sudo pip install -U -r requirements.txt
 	sudo python setup.py install
 
 check_convention:
