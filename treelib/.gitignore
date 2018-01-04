@@ -17,3 +17,6 @@ install-sh
 missing
 src/.deps/
 src/Makefile.in
+*.o
+.idea
+CMakeLists.txt
